@@ -4,8 +4,29 @@ const { ImapFlow } = require('imapflow');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
-const accounts = require('./accounts');
 const store = require('./store');
+
+// Load accounts: prefer env vars (Railway/production), fall back to accounts.js (local dev)
+let accounts;
+try { accounts = require('./accounts'); } catch(e) { accounts = []; }
+
+// Build accounts from env vars if defined — overrides/supplements accounts.js
+function makeAccount(id, name, email, color, icon, imapHost, smtpHost, userEnv, passEnv) {
+  const user = process.env[userEnv] || email;
+  const pass = process.env[passEnv] || '';
+  if (!pass && accounts.find(a => a.id === id)) return null; // local accounts.js has it
+  return { id, name, email: user, color, icon,
+    imap: { host: imapHost, port: 993, secure: true, auth: { user, pass } },
+    smtp: { host: smtpHost, port: 587, secure: false, auth: { user, pass } } };
+}
+const envAccounts = [
+  makeAccount('gmail','Gmail','you@gmail.com','#EA4335','G','imap.gmail.com','smtp.gmail.com','GMAIL_USER','GMAIL_APP_PASSWORD'),
+  makeAccount('account2','Account 2','','#FF6B35','2','imap.dreamhost.com','smtp.dreamhost.com','ACCT2_USER','ACCT2_PASSWORD'),
+  makeAccount('account3','Account 3','','#F7931E','3','imap.dreamhost.com','smtp.dreamhost.com','ACCT3_USER','ACCT3_PASSWORD'),
+  makeAccount('account4','Account 4','','#8B5CF6','4','imap.dreamhost.com','smtp.dreamhost.com','ACCT4_USER','ACCT4_PASSWORD'),
+  makeAccount('account5','Account 5','','#10B981','5','imap.dreamhost.com','smtp.dreamhost.com','ACCT5_USER','ACCT5_PASSWORD'),
+].filter(a => a && a.smtp.auth.pass);
+if (envAccounts.length > 0 && accounts.length === 0) accounts = envAccounts;
 
 // 1x1 transparent GIF
 const PIXEL_GIF = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
