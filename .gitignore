@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Sensitive data - DO NOT COMMIT
+data.json
+accounts.js
+.env
+
+# Keep config template but not real config
+# config.json  <-- commit this (no secrets, just branding)
+
+# Logs
+*.log
+npm-debug.log*
+
+# PM2
+.pm2/
+
+# OS files
+.DS_Store
+Thumbs.db

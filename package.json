@@ -1,0 +1,20 @@
+{
+  "name": "email-dashboard",
+  "version": "1.0.0",
+  "description": "Self-hosted email marketing platform — multi-account inbox, campaign builder, audience manager, open/click tracking, and white-label config.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "imapflow": "^1.3.6",
+    "nodemailer": "^8.0.10"
+  }
+}

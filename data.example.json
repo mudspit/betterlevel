@@ -1,0 +1,11 @@
+{
+  "contacts": [],
+  "emails": [],
+  "trackers": [],
+  "settings": {
+    "publicUrl": "http://localhost:3000",
+    "notifyInterval": 120
+  },
+  "campaigns": [],
+  "lists": []
+}

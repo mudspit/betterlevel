@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sherwin's Domain</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #000000;
+    --bg2: #0e0e0e;
+    --bg3: #1a1a1a;
+    --border: #2a2a2a;
+    --text: #ffffff;
+    --text2: #8a8a8a;
+    --accent: #f9b21b;
+    --accent2: #e0a018;
+    --danger: #ef4444;
+    --success: #10b981;
+    --warn: #f9b21b;
+    --sidebar-w: 260px;
+    --list-w: 360px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; font-size: 14px; }
+
+  /* SIDEBAR */
+  #sidebar { width: var(--sidebar-w); background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  #sidebar-header { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); }
+  #sidebar-header h1 { font-size: 18px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  #sidebar-header h1 span { color: var(--accent); }
+  #compose-btn { margin: 12px 12px 0; background: var(--accent); color: #000; border: none; border-radius: 8px; padding: 10px 0; width: calc(100% - 24px); cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background .2s; }
+  #compose-btn:hover { background: var(--accent2); }
+  #accounts-list { overflow-y: auto; flex: 1; padding: 8px 0; }
+  .account-section { padding: 4px 0; }
+  .account-header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; border-radius: 6px; margin: 0 6px; transition: background .15s; position: relative; }
+  .account-header:hover { background: var(--bg3); }
+  .account-header.active { background: rgba(249,178,27,.12); }
+  .account-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
+  .account-info { flex: 1; min-width: 0; }
+  .account-name { font-weight: 600; font-size: 13px; }
+  .account-email { font-size: 11px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .account-badge { background: var(--accent); color: #000; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 2px 6px; min-width: 18px; text-align: center; }
+  .account-lock { color: var(--warn); font-size: 13px; }
+  .folder-list { padding: 0 6px 6px; }
+  .folder-item { display: flex; align-items: center; gap: 8px; padding: 7px 12px 7px 20px; border-radius: 6px; cursor: pointer; transition: background .15s; font-size: 13px; color: var(--text2); }
+  .folder-item:hover { background: var(--bg3); color: var(--text); }
+  .folder-item.active { background: rgba(249,178,27,.12); color: var(--accent); font-weight: 600; }
+  .folder-icon { font-size: 14px; }
+
+  /* EMAIL LIST */
+  #email-list-pane { width: var(--list-w); border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--bg); flex-shrink: 0; }
+  #list-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  #list-header h2 { font-size: 15px; font-weight: 600; flex: 1; }
+  #refresh-btn { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px; transition: all .2s; }
+  #refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+  #search-bar { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  #search-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 7px 12px; font-size: 13px; outline: none; transition: border-color .2s; }
+  #search-input:focus { border-color: var(--accent); }
+  #email-list { overflow-y: auto; flex: 1; }
+  .email-item { padding: 12px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s; position: relative; }
+  .email-item:hover { background: var(--bg2); }
+  .email-item.active { background: rgba(249,178,27,.08); border-left: 3px solid var(--accent); }
+  .email-item.unread .email-sender { font-weight: 700; color: var(--text); }
+  .email-item.unread .email-subject { font-weight: 600; }
+  .unread-dot { position: absolute; left: 4px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+  .email-sender { font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+  .email-subject { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+  .email-meta { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .email-date { font-size: 11px; color: var(--text2); white-space: nowrap; }
+  .email-flags { display: flex; gap: 4px; }
+  .flag-star { color: var(--warn); font-size: 12px; }
+  .flag-attach { color: var(--text2); font-size: 12px; }
+  #list-footer { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); }
+  #list-footer button { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 12px; transition: all .2s; }
+  #list-footer button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  #list-footer button:disabled { opacity: 0.4; cursor: default; }
+
+  /* READING PANE */
+  #reading-pane { flex: 1; display: flex; flex-direction: column; background: var(--bg); min-width: 0; }
+  #reading-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  #reading-header h2 { font-size: 14px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #reading-actions { display: flex; gap: 6px; }
+  .action-btn { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 12px; transition: all .2s; display: flex; align-items: center; gap: 4px; }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .action-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+  .action-btn.active { color: var(--warn); border-color: var(--warn); }
+  #email-meta-bar { padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--bg2); }
+  .meta-row { display: flex; gap: 8px; font-size: 12px; margin-bottom: 4px; color: var(--text2); }
+  .meta-row:last-child { margin-bottom: 0; }
+  .meta-label { color: var(--text2); min-width: 32px; }
+  .meta-val { color: var(--text); }
+  #email-body { flex: 1; overflow-y: auto; padding: 20px; }
+  #email-body iframe { width: 100%; border: none; background: #fff; border-radius: 8px; min-height: 400px; }
+  #email-body pre { font-family: inherit; font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: var(--text); }
+  #empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text2); gap: 12px; }
+  #empty-state .icon { font-size: 48px; opacity: .3; }
+  #empty-state p { font-size: 14px; }
+
+  /* LOADING */
+  .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text2); gap: 10px; }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ERROR */
+  .error-msg { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; padding: 12px 16px; border-radius: 8px; margin: 12px; font-size: 13px; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 680px; max-height: 90vh; display: flex; flex-direction: column; }
+  .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-header h3 { font-size: 16px; font-weight: 600; }
+  .modal-close { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 20px; line-height: 1; padding: 0 4px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 16px 20px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .form-input { background: var(--bg3); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 12px; font-size: 13px; outline: none; transition: border-color .2s; font-family: inherit; }
+  .form-input:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 200px; line-height: 1.5; }
+  .form-select { appearance: none; cursor: pointer; }
+  .btn { border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .2s; }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* PASSWORD MODAL */
+  .pw-instructions { font-size: 12px; color: var(--text2); line-height: 1.6; background: var(--bg3); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); }
+  .pw-instructions a { color: var(--accent); }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: 8px; font-size: 13px; z-index: 200; transform: translateY(60px); transition: transform .3s; pointer-events: none; }
+  #toast.show { transform: translateY(0); }
+  #toast.success { border-color: var(--success); color: var(--success); }
+  #toast.error { border-color: var(--danger); color: #fca5a5; }
+
+  /* SIDEBAR NAV */
+  .sidebar-divider { border: none; border-top: 1px solid var(--border); margin: 8px 12px; }
+  .sidebar-nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; border-radius: 6px; margin: 0 6px; font-size: 13px; color: var(--text2); transition: background .15s; }
+  .sidebar-nav-item:hover { background: var(--bg3); color: var(--text); }
+  .sidebar-nav-item.active { background: rgba(249,178,27,.12); color: var(--accent); font-weight: 600; }
+
+  /* FULL PANEL (replaces list+reading pane) */
+  #full-panel { flex: 1; display: none; flex-direction: column; min-width: 0; overflow: hidden; }
+  #full-panel.visible { display: flex; }
+  #full-panel-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  #full-panel-header h2 { font-size: 15px; font-weight: 600; flex: 1; }
+  #full-panel-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+  /* TRACKING TABLE */
+  .track-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .track-table th { text-align: left; padding: 8px 12px; color: var(--text2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); }
+  .track-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .track-table tr:hover td { background: var(--bg2); }
+  .track-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .track-status.opened { background: rgba(16,185,129,.15); color: var(--success); }
+  .track-status.not-opened { background: rgba(144,149,192,.1); color: var(--text2); }
+  .track-opens-detail { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .track-delete { background: none; border: none; color: var(--text2); cursor: pointer; padding: 4px; border-radius: 4px; font-size: 14px; }
+  .track-delete:hover { color: var(--danger); }
+  .track-empty { text-align: center; padding: 60px 20px; color: var(--text2); }
+  .track-empty .icon { font-size: 40px; opacity: .3; margin-bottom: 12px; }
+  .settings-section { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }
+  .settings-section h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; }
+
+  /* CONTACTS */
+  .contacts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .contact-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; transition: border-color .2s; }
+  .contact-card:hover { border-color: var(--accent); }
+  .contact-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; flex-shrink: 0; }
+  .contact-info { flex: 1; min-width: 0; }
+  .contact-name { font-weight: 600; font-size: 13px; }
+  .contact-email { font-size: 11px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .contact-actions { display: flex; gap: 4px; }
+  .contact-btn { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 5px; padding: 4px 8px; cursor: pointer; font-size: 11px; transition: all .15s; }
+  .contact-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .contact-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+  .contacts-search { width: 100%; max-width: 320px; }
+  .contacts-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+
+  /* TOGGLE SWITCH */
+  .toggle-wrap { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); cursor: pointer; }
+  .toggle { width: 36px; height: 20px; background: var(--border); border-radius: 10px; position: relative; transition: background .2s; flex-shrink: 0; }
+  .toggle.on { background: var(--accent); }
+  .toggle::after { content: ''; position: absolute; left: 3px; top: 3px; width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: left .2s; }
+  .toggle.on::after { left: 19px; }
+
+  /* AUTOCOMPLETE */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; z-index: 50; max-height: 180px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+  .autocomplete-item { padding: 8px 12px; cursor: pointer; font-size: 13px; }
+  .autocomplete-item:hover, .autocomplete-item.focused { background: var(--bg3); }
+  .autocomplete-name { font-weight: 500; }
+  .autocomplete-email { font-size: 11px; color: var(--text2); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h1>✉ Sherwin's <span>Domain</span></h1>
+  </div>
+  <button id="compose-btn" onclick="openCompose()">✏ Compose</button>
+  <div id="accounts-list">
+    <div class="loading"><div class="spinner"></div> Loading accounts...</div>
+  </div>
+  <hr class="sidebar-divider">
+  <div style="padding: 0 0 8px">
+    <div class="sidebar-nav-item" id="nav-tracking" onclick="showPanel('tracking')">
+      <span>📡</span><span>Tracking</span><span id="track-badge" style="margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:2px 6px;display:none"></span>
+    </div>
+    <div class="sidebar-nav-item" id="nav-contacts" onclick="showPanel('contacts')">
+      <span>👥</span><span>Contacts</span>
+    </div>
+    <a href="/campaigns.html" class="sidebar-nav-item" style="text-decoration:none;color:inherit">
+      <span>📧</span><span>Campaigns</span><span style="margin-left:auto;background:var(--accent);color:#000;font-size:9px;font-weight:700;border-radius:3px;padding:1px 5px">NEW</span>
+    </a>
+    <div class="sidebar-nav-item" id="nav-settings" onclick="showPanel('settings')">
+      <span>⚙</span><span>Settings</span>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL LIST PANE -->
+<div id="email-list-pane">
+  <div id="list-header">
+    <h2 id="list-title">Select an account</h2>
+    <button id="refresh-btn" onclick="refreshCurrentFolder()" title="Refresh">↺ Refresh</button>
+  </div>
+  <div id="search-bar">
+    <input type="text" id="search-input" placeholder="Search emails..." oninput="filterEmails(this.value)">
+  </div>
+  <div id="email-list">
+    <div style="padding:40px 20px;text-align:center;color:var(--text2);">Select an account to view emails</div>
+  </div>
+  <div id="list-footer">
+    <button id="prev-btn" onclick="changePage(-1)" disabled>‹ Prev</button>
+    <span id="page-info">—</span>
+    <button id="next-btn" onclick="changePage(1)" disabled>Next ›</button>
+    <span style="margin-left:auto" id="total-count"></span>
+  </div>
+</div>
+
+<!-- READING PANE -->
+<div id="reading-pane">
+  <div id="empty-state">
+    <div class="icon">📬</div>
+    <p>Select an email to read</p>
+  </div>
+</div>
+
+<!-- FULL PANEL (Tracking / Contacts / Settings) -->
+<div id="full-panel">
+  <div id="full-panel-header">
+    <h2 id="full-panel-title"></h2>
+    <div id="full-panel-actions"></div>
+  </div>
+  <div id="full-panel-body"></div>
+</div>
+
+<!-- COMPOSE MODAL -->
+<div id="compose-modal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="compose-title">New Message</h3>
+      <button class="modal-close" onclick="closeCompose()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">From</label>
+        <select id="compose-from" class="form-input form-select"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">To</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="compose-to" class="form-input" placeholder="recipient@example.com" autocomplete="off" oninput="acSearch(this.value)" onblur="setTimeout(acHide,150)">
+          <div class="autocomplete-list" id="ac-list" style="display:none"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">CC</label>
+        <input type="text" id="compose-cc" class="form-input" placeholder="cc@example.com (optional)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <input type="text" id="compose-subject" class="form-input" placeholder="Subject">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Message</label>
+        <textarea id="compose-body" class="form-input form-textarea" placeholder="Write your message..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <label class="toggle-wrap" title="Inject a tracking pixel — you'll see when the recipient opens this email">
+        <div class="toggle" id="track-toggle" onclick="this.classList.toggle('on')"></div>
+        <span>Track opens</span>
+      </label>
+      <div style="flex:1"></div>
+      <button class="btn btn-secondary" onclick="closeCompose()">Cancel</button>
+      <button class="btn btn-primary" onclick="sendEmail()">⬆ Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div id="password-modal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <h3>🔐 Set Password</h3>
+      <button class="modal-close" onclick="closePasswordModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="pw-account-info" style="margin-bottom:4px"></div>
+      <div id="pw-instructions" class="pw-instructions"></div>
+      <div class="form-group">
+        <label class="form-label">Password / App Password</label>
+        <input type="password" id="pw-input" class="form-input" placeholder="Enter password...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closePasswordModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePassword()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let accounts = [];
+let currentAccount = null;
+let currentFolder = 'INBOX';
+let currentPage = 1;
+let currentEmails = [];
+let filteredEmails = [];
+let currentEmail = null;
+let replyData = null;
+let passwordTarget = null;
+let currentPanel = null; // 'tracking' | 'contacts' | 'settings'
+let allContacts = [];
+
+// Init
+async function init() {
+  const res = await fetch('/api/accounts');
+  accounts = await res.json();
+  renderSidebar();
+  refreshTrackBadge();
+}
+
+function renderSidebar() {
+  const el = document.getElementById('accounts-list');
+  el.innerHTML = accounts.map(acc => `
+    <div class="account-section" id="section-${acc.id}">
+      <div class="account-header ${currentAccount?.id === acc.id ? 'active' : ''}"
+           onclick="toggleAccount('${acc.id}')" id="header-${acc.id}">
+        <div class="account-icon" style="background:${acc.color}">${acc.icon}</div>
+        <div class="account-info">
+          <div class="account-name">${acc.name}</div>
+          <div class="account-email">${acc.email}</div>
+        </div>
+        <span class="account-lock" id="lock-${acc.id}" title="Click to set password">🔒</span>
+      </div>
+      <div class="folder-list" id="folders-${acc.id}" style="display:none"></div>
+    </div>
+  `).join('');
+}
+
+async function toggleAccount(id) {
+  // If a panel is open, close it first and restore email panes
+  if (currentPanel) hidePanel();
+
+  const acc = accounts.find(a => a.id === id);
+  if (currentAccount?.id === id && !currentPanel) {
+    // Collapse
+    document.getElementById(`folders-${id}`).style.display = 'none';
+    document.getElementById(`header-${id}`).classList.remove('active');
+    currentAccount = null;
+    return;
+  }
+  currentAccount = acc;
+  currentFolder = 'INBOX';
+  currentPage = 1;
+
+  // Update active states
+  document.querySelectorAll('.account-header').forEach(h => h.classList.remove('active'));
+  document.getElementById(`header-${id}`).classList.add('active');
+
+  // Show folders
+  const foldersEl = document.getElementById(`folders-${id}`);
+  foldersEl.style.display = 'block';
+  foldersEl.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  // Load folders
+  try {
+    const res = await fetch(`/api/folders/${id}`);
+    const data = await res.json();
+    if (res.ok) {
+      renderFolders(id, data);
+    } else {
+      const isAuthErr = data.error?.match(/AUTH|LOGIN|password|credentials|AUTHENTICATIONFAILED|Invalid|incorrect/i);
+      foldersEl.innerHTML = `<div style="padding:8px 12px 8px 16px;font-size:12px;">
+        <a href="#" onclick="openPasswordModal('${id}');return false" style="color:var(--warn)">🔑 ${isAuthErr ? 'Wrong password — click to update' : 'Set password to connect'}</a>
+        <div style="color:var(--danger);margin-top:4px;font-size:11px">${data.error || ''}</div>
+      </div>`;
+    }
+  } catch (e) {
+    foldersEl.innerHTML = `<div style="padding:8px 12px;font-size:12px;color:var(--danger);">Connection failed: ${e.message}</div>`;
+  }
+
+  loadEmails();
+}
+
+function renderFolders(accountId, folders) {
+  const foldersEl = document.getElementById(`folders-${accountId}`);
+  const icons = { INBOX: '📥', Drafts: '📝', Sent: '📤', 'Sent Messages': '📤', Trash: '🗑', Spam: '⚠', Junk: '⚠', Archive: '📦', Starred: '⭐', '[Gmail]/Sent Mail': '📤', '[Gmail]/Trash': '🗑', '[Gmail]/Spam': '⚠', '[Gmail]/All Mail': '📦', '[Gmail]/Drafts': '📝', '[Gmail]/Starred': '⭐' };
+  const common = folders.filter(f => ['INBOX', 'Drafts', 'Sent', 'Sent Messages', 'Trash', 'Spam', 'Junk', '[Gmail]/Sent Mail', '[Gmail]/Trash', '[Gmail]/Spam', '[Gmail]/All Mail', '[Gmail]/Drafts', '[Gmail]/Starred'].includes(f.path));
+  const rest = folders.filter(f => !common.find(c => c.path === f.path));
+
+  const all = [...common, ...rest.slice(0, 5)];
+  foldersEl.innerHTML = all.map(f => `
+    <div class="folder-item ${currentFolder === f.path && currentAccount?.id === accountId ? 'active' : ''}"
+         onclick="selectFolder('${accountId}', '${f.path.replace(/'/g,"\\'")}')">
+      <span class="folder-icon">${icons[f.path] || '📁'}</span>
+      <span>${f.name}</span>
+    </div>
+  `).join('');
+}
+
+function selectFolder(accountId, folder) {
+  currentAccount = accounts.find(a => a.id === accountId);
+  currentFolder = folder;
+  currentPage = 1;
+  document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('active'));
+  event.target.closest('.folder-item')?.classList.add('active');
+  loadEmails();
+}
+
+async function loadEmails() {
+  if (!currentAccount) return;
+  document.getElementById('list-title').textContent = `${currentAccount.name} — ${currentFolder}`;
+  document.getElementById('email-list').innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
+
+  try {
+    const res = await fetch(`/api/emails/${currentAccount.id}?folder=${encodeURIComponent(currentFolder)}&page=${currentPage}&limit=25`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (data.error?.includes('password') || data.error?.includes('credentials') || data.error?.includes('AUTH') || data.error?.includes('LOGIN')) {
+        openPasswordModal(currentAccount.id);
+      }
+      document.getElementById('email-list').innerHTML = `<div class="error-msg">${data.error}</div>`;
+      return;
+    }
+
+    currentEmails = data.emails;
+    filteredEmails = [...currentEmails];
+    renderEmailList();
+    updatePagination(data.total, data.page, data.limit);
+    document.getElementById('lock-' + currentAccount.id).style.display = 'none';
+  } catch (e) {
+    document.getElementById('email-list').innerHTML = `<div class="error-msg">${e.message}</div>`;
+  }
+}
+
+function renderEmailList() {
+  const el = document.getElementById('email-list');
+  if (filteredEmails.length === 0) {
+    el.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text2);">No emails</div>';
+    return;
+  }
+  el.innerHTML = filteredEmails.map(email => `
+    <div class="email-item ${!email.seen ? 'unread' : ''} ${currentEmail?.uid === email.uid ? 'active' : ''}"
+         onclick="openEmail(${email.uid})" id="email-item-${email.uid}">
+      ${!email.seen ? '<div class="unread-dot"></div>' : ''}
+      <div class="email-sender">${escHtml(formatSender(email.from))}</div>
+      <div class="email-subject">${escHtml(email.subject)}</div>
+      <div class="email-meta">
+        <span class="email-date">${formatDate(email.date)}</span>
+        <span class="email-flags">
+          ${email.flagged ? '<span class="flag-star">★</span>' : ''}
+          ${email.hasAttachment ? '<span class="flag-attach">📎</span>' : ''}
+        </span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterEmails(query) {
+  const q = query.toLowerCase();
+  filteredEmails = q ? currentEmails.filter(e =>
+    e.subject.toLowerCase().includes(q) ||
+    e.from.toLowerCase().includes(q)
+  ) : [...currentEmails];
+  renderEmailList();
+}
+
+function updatePagination(total, page, limit) {
+  const pages = Math.ceil(total / limit);
+  document.getElementById('page-info').textContent = `${page} / ${pages || 1}`;
+  document.getElementById('total-count').textContent = `${total} emails`;
+  document.getElementById('prev-btn').disabled = page <= 1;
+  document.getElementById('next-btn').disabled = page >= pages;
+}
+
+function changePage(delta) {
+  currentPage += delta;
+  loadEmails();
+}
+
+function refreshCurrentFolder() {
+  loadEmails();
+}
+
+async function openEmail(uid) {
+  if (!currentAccount) return;
+
+  // Mark as read in list
+  const item = document.getElementById(`email-item-${uid}`);
+  if (item) { item.classList.remove('unread'); const dot = item.querySelector('.unread-dot'); if (dot) dot.remove(); }
+  document.querySelectorAll('.email-item').forEach(i => i.classList.remove('active'));
+  if (item) item.classList.add('active');
+
+  const pane = document.getElementById('reading-pane');
+  pane.innerHTML = '<div class="loading" style="height:100%"><div class="spinner"></div> Loading...</div>';
+
+  try {
+    const res = await fetch(`/api/emails/${currentAccount.id}/${uid}?folder=${encodeURIComponent(currentFolder)}`);
+    const email = await res.json();
+    if (!res.ok) { pane.innerHTML = `<div class="error-msg">${email.error}</div>`; return; }
+    currentEmail = email;
+    renderEmailDetail(email);
+
+    // Update local seen state
+    const e = currentEmails.find(e => e.uid === uid);
+    if (e) e.seen = true;
+  } catch (err) {
+    pane.innerHTML = `<div class="error-msg">${err.message}</div>`;
+  }
+}
+
+function renderEmailDetail(email) {
+  const pane = document.getElementById('reading-pane');
+  pane.innerHTML = `
+    <div id="reading-header">
+      <h2>${escHtml(email.subject)}</h2>
+      <div id="reading-actions">
+        <button class="action-btn ${email.flagged ? 'active' : ''}" onclick="toggleFlag()" id="star-btn" title="Star">★</button>
+        <button class="action-btn" onclick="openReply(false)" title="Reply">↩ Reply</button>
+        <button class="action-btn" onclick="openReply(true)" title="Reply All">↩ Reply All</button>
+        <button class="action-btn" onclick="openForward()" title="Forward">→ Forward</button>
+        <button class="action-btn danger" onclick="deleteEmail()" title="Delete">🗑 Delete</button>
+      </div>
+    </div>
+    <div id="email-meta-bar">
+      <div class="meta-row"><span class="meta-label">From</span><span class="meta-val">${escHtml(email.from)}</span></div>
+      <div class="meta-row"><span class="meta-label">To</span><span class="meta-val">${escHtml(email.to)}</span></div>
+      ${email.cc ? `<div class="meta-row"><span class="meta-label">CC</span><span class="meta-val">${escHtml(email.cc)}</span></div>` : ''}
+      <div class="meta-row"><span class="meta-label">Date</span><span class="meta-val">${new Date(email.date).toLocaleString()}</span></div>
+      ${email.attachments?.length ? `<div class="meta-row"><span class="meta-label">📎</span><span class="meta-val">${email.attachments.map(a => a.name).join(', ')}</span></div>` : ''}
+    </div>
+    <div id="email-body">
+      ${email.html ? renderHtmlEmail(email.html) : `<pre>${escHtml(email.text || '')}</pre>`}
+    </div>
+  `;
+}
+
+function renderHtmlEmail(html) {
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  return `<iframe src="${url}" onload="autoResizeIframe(this)" sandbox="allow-same-origin"></iframe>`;
+}
+
+function autoResizeIframe(iframe) {
+  try {
+    iframe.style.height = iframe.contentDocument.body.scrollHeight + 40 + 'px';
+  } catch (e) {}
+}
+
+async function toggleFlag() {
+  if (!currentEmail || !currentAccount) return;
+  const newFlagged = !currentEmail.flagged;
+  currentEmail.flagged = newFlagged;
+  const btn = document.getElementById('star-btn');
+  if (btn) btn.classList.toggle('active', newFlagged);
+  const e = currentEmails.find(e => e.uid === currentEmail.uid);
+  if (e) { e.flagged = newFlagged; renderEmailList(); }
+
+  await fetch(`/api/emails/${currentAccount.id}/${currentEmail.uid}/flag`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ flagged: newFlagged, folder: currentFolder }),
+  });
+}
+
+async function deleteEmail() {
+  if (!currentEmail || !currentAccount) return;
+  if (!confirm('Delete this email?')) return;
+
+  const res = await fetch(`/api/emails/${currentAccount.id}/${currentEmail.uid}?folder=${encodeURIComponent(currentFolder)}`, { method: 'DELETE' });
+  if (res.ok) {
+    currentEmails = currentEmails.filter(e => e.uid !== currentEmail.uid);
+    filteredEmails = filteredEmails.filter(e => e.uid !== currentEmail.uid);
+    renderEmailList();
+    document.getElementById('reading-pane').innerHTML = '<div id="empty-state"><div class="icon">🗑</div><p>Email deleted</p></div>';
+    currentEmail = null;
+    showToast('Email deleted', 'success');
+  }
+}
+
+// COMPOSE
+function openCompose(opts = {}) {
+  document.getElementById('compose-title').textContent = opts.title || 'New Message';
+  document.getElementById('compose-to').value = opts.to || '';
+  document.getElementById('compose-cc').value = opts.cc || '';
+  document.getElementById('compose-subject').value = opts.subject || '';
+  document.getElementById('compose-body').value = opts.body || '';
+  replyData = opts.replyTo || null;
+
+  const fromSel = document.getElementById('compose-from');
+  fromSel.innerHTML = accounts.map(a => `<option value="${a.id}">${a.name} &lt;${a.email}&gt;</option>`).join('');
+  if (currentAccount) fromSel.value = currentAccount.id;
+
+  document.getElementById('compose-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('compose-to').focus(), 50);
+}
+
+function closeCompose() { document.getElementById('compose-modal').style.display = 'none'; replyData = null; }
+
+function openReply(replyAll) {
+  if (!currentEmail) return;
+  const from = extractEmail(currentEmail.from);
+  const subject = currentEmail.subject.startsWith('Re:') ? currentEmail.subject : `Re: ${currentEmail.subject}`;
+  const quoted = `\n\n--- Original Message ---\nFrom: ${currentEmail.from}\nDate: ${new Date(currentEmail.date).toLocaleString()}\n\n${currentEmail.text || ''}`;
+  openCompose({
+    title: 'Reply',
+    to: from,
+    cc: replyAll ? currentEmail.cc : '',
+    subject,
+    body: quoted,
+    replyTo: currentEmail.uid,
+  });
+}
+
+function openForward() {
+  if (!currentEmail) return;
+  const subject = currentEmail.subject.startsWith('Fwd:') ? currentEmail.subject : `Fwd: ${currentEmail.subject}`;
+  const body = `\n\n--- Forwarded Message ---\nFrom: ${currentEmail.from}\nDate: ${new Date(currentEmail.date).toLocaleString()}\nSubject: ${currentEmail.subject}\n\n${currentEmail.text || ''}`;
+  openCompose({ title: 'Forward', subject, body });
+}
+
+async function sendEmail() {
+  const accountId = document.getElementById('compose-from').value;
+  const to = document.getElementById('compose-to').value.trim();
+  const cc = document.getElementById('compose-cc').value.trim();
+  const subject = document.getElementById('compose-subject').value.trim();
+  const body = document.getElementById('compose-body').value;
+  const trackOpen = document.getElementById('track-toggle').classList.contains('on');
+
+  if (!to) { showToast('Please enter a recipient', 'error'); return; }
+  if (!subject) { showToast('Please enter a subject', 'error'); return; }
+
+  const btn = document.querySelector('#compose-modal .btn-primary');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  const res = await fetch('/api/send', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accountId, to, cc, subject, body, replyTo: replyData, trackOpen }),
+  });
+  const data = await res.json();
+  btn.textContent = '⬆ Send';
+  btn.disabled = false;
+
+  if (res.ok) {
+    closeCompose();
+    showToast(trackOpen ? 'Email sent with tracking! 📡' : 'Email sent!', 'success');
+    if (trackOpen) refreshTrackBadge();
+  } else {
+    showToast(`Failed: ${data.error}`, 'error');
+  }
+}
+
+// PASSWORD MODAL
+function openPasswordModal(accountId) {
+  passwordTarget = accounts.find(a => a.id === accountId);
+  if (!passwordTarget) return;
+  document.getElementById('pw-account-info').innerHTML = `<strong>${passwordTarget.name}</strong> — <code style="color:var(--accent)">${passwordTarget.email}</code>`;
+  const isGmail = accountId === 'gmail';
+  document.getElementById('pw-instructions').innerHTML = isGmail
+    ? `⚠️ Gmail requires a <strong>16-character App Password</strong> — NOT your regular Gmail password.<br><br>
+       <strong>Steps:</strong><br>
+       1. Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--accent)">myaccount.google.com/apppasswords</a><br>
+       2. Sign in → create a new app password (name it "Mail")<br>
+       3. Copy the 16-character code (e.g. <code style="color:var(--accent)">abcd efgh ijkl mnop</code>) and paste below<br><br>
+       <em style="color:var(--text2)">Note: 2-Step Verification must be enabled on your Google account first.</em>`
+    : `Enter your DreamHost webmail password for <strong>${passwordTarget.email}</strong>.<br>Same password you use at <a href="https://webmail.dreamhost.com" target="_blank" style="color:var(--accent)">webmail.dreamhost.com</a>.`;
+  document.getElementById('pw-input').value = '';
+  document.getElementById('password-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('pw-input').focus(), 50);
+}
+
+function closePasswordModal() { document.getElementById('password-modal').style.display = 'none'; passwordTarget = null; }
+
+async function savePassword() {
+  if (!passwordTarget) return;
+  const pw = document.getElementById('pw-input').value;
+  if (!pw) { showToast('Please enter a password', 'error'); return; }
+
+  const btn = document.querySelector('#password-modal .btn-primary');
+  btn.textContent = 'Connecting...'; btn.disabled = true;
+
+  const res = await fetch(`/api/accounts/${passwordTarget.id}/password`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pw }),
+  });
+  btn.textContent = 'Save & Connect'; btn.disabled = false;
+
+  if (!res.ok) { showToast('Server error saving password', 'error'); return; }
+
+  const savedId = passwordTarget.id;
+  closePasswordModal();
+
+  // Force reload: reset currentAccount so toggleAccount opens fresh
+  if (currentAccount?.id === savedId) {
+    currentAccount = null;
+    document.getElementById(`header-${savedId}`).classList.remove('active');
+    document.getElementById(`folders-${savedId}`).style.display = 'none';
+  }
+
+  showToast('Password saved — connecting...', 'success');
+  await toggleAccount(savedId);
+}
+
+// UTILS
+function formatSender(from) {
+  const m = from.match(/^(.+?)\s*<[^>]+>$/);
+  return m ? m[1].trim() || from : from;
+}
+
+function extractEmail(str) {
+  const m = str.match(/<([^>]+)>/);
+  return m ? m[1] : str;
+}
+
+function formatDate(date) {
+  if (!date) return '';
+  const d = new Date(date);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (d.getFullYear() === now.getFullYear()) return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: '2-digit' });
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+let toastTimer;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3000);
+}
+
+// ─── PANEL SYSTEM ────────────────────────────────────────────────
+
+function showPanel(name) {
+  currentPanel = name;
+  // Hide email panes, show full panel
+  document.getElementById('email-list-pane').style.display = 'none';
+  document.getElementById('reading-pane').style.display = 'none';
+  document.getElementById('full-panel').classList.add('visible');
+
+  // Deactivate account headers, activate nav item
+  document.querySelectorAll('.account-header').forEach(h => h.classList.remove('active'));
+  document.querySelectorAll('.sidebar-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-' + name)?.classList.add('active');
+
+  if (name === 'tracking') renderTrackingPanel();
+  if (name === 'contacts') renderContactsPanel();
+  if (name === 'settings') renderSettingsPanel();
+}
+
+function hidePanel() {
+  currentPanel = null;
+  document.getElementById('email-list-pane').style.display = 'flex';
+  document.getElementById('reading-pane').style.display = 'flex';
+  document.getElementById('full-panel').classList.remove('visible');
+  document.querySelectorAll('.sidebar-nav-item').forEach(n => n.classList.remove('active'));
+}
+
+// ─── TRACKING ────────────────────────────────────────────────────
+
+async function renderTrackingPanel() {
+  document.getElementById('full-panel-title').textContent = '📡 Email Tracking';
+  document.getElementById('full-panel-actions').innerHTML =
+    `<button class="action-btn" onclick="renderTrackingPanel()">↺ Refresh</button>`;
+
+  const body = document.getElementById('full-panel-body');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
+
+  const res = await fetch('/api/tracking');
+  const tracked = await res.json();
+
+  if (tracked.length === 0) {
+    body.innerHTML = `<div class="track-empty"><div class="icon">📡</div><p>No tracked emails yet.</p>
+      <p style="margin-top:8px;font-size:12px">Enable <strong>Track opens</strong> when composing an email to see results here.</p></div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <table class="track-table">
+      <thead><tr>
+        <th>Subject</th><th>To</th><th>Sent</th><th>Status</th><th>Opens</th><th></th>
+      </tr></thead>
+      <tbody>${tracked.map(t => `
+        <tr>
+          <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.subject)}</td>
+          <td style="color:var(--text2);font-size:12px">${escHtml(t.to)}</td>
+          <td style="color:var(--text2);font-size:12px;white-space:nowrap">${formatDate(t.sentAt)}</td>
+          <td>
+            ${t.openCount > 0
+              ? `<span class="track-status opened">✓ Opened</span>`
+              : `<span class="track-status not-opened">● Not opened</span>`}
+          </td>
+          <td>
+            ${t.openCount > 0 ? `
+              <div style="font-size:12px;font-weight:600">${t.openCount}×</div>
+              <div class="track-opens-detail">First: ${formatDate(t.opens[0]?.at)}</div>
+              ${t.openCount > 1 ? `<div class="track-opens-detail">Last: ${formatDate(t.opens[t.opens.length-1]?.at)}</div>` : ''}
+            ` : `<span style="color:var(--text2);font-size:12px">—</span>`}
+          </td>
+          <td><button class="track-delete" onclick="deleteTracked('${t.id}')" title="Remove">🗑</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function deleteTracked(id) {
+  await fetch(`/api/tracking/${id}`, { method: 'DELETE' });
+  refreshTrackBadge();
+  renderTrackingPanel();
+}
+
+async function refreshTrackBadge() {
+  try {
+    const res = await fetch('/api/tracking');
+    const tracked = await res.json();
+    const opened = tracked.filter(t => t.openCount > 0).length;
+    const badge = document.getElementById('track-badge');
+    if (opened > 0) { badge.textContent = opened; badge.style.display = 'inline'; }
+    else badge.style.display = 'none';
+  } catch (_) {}
+}
+
+// ─── CONTACTS ────────────────────────────────────────────────────
+
+async function renderContactsPanel(query = '') {
+  document.getElementById('full-panel-title').textContent = '👥 Contacts';
+  document.getElementById('full-panel-actions').innerHTML =
+    `<button class="action-btn" onclick="openAddContact()">+ Add Contact</button>`;
+
+  const body = document.getElementById('full-panel-body');
+  const res = await fetch(`/api/contacts${query ? '?q=' + encodeURIComponent(query) : ''}`);
+  allContacts = await res.json();
+
+  body.innerHTML = `
+    <div class="contacts-toolbar">
+      <input class="form-input contacts-search" placeholder="Search contacts..." value="${escHtml(query)}"
+        oninput="renderContactsPanel(this.value)">
+      <span style="color:var(--text2);font-size:12px">${allContacts.length} contact${allContacts.length !== 1 ? 's' : ''}</span>
+    </div>
+    ${allContacts.length === 0
+      ? `<div class="track-empty"><div class="icon">👥</div><p>No contacts yet.</p>
+         <p style="margin-top:8px;font-size:12px">Contacts are added automatically when you send emails, or add them manually.</p></div>`
+      : `<div class="contacts-grid">${allContacts.map(c => `
+          <div class="contact-card" id="cc-${c.id}">
+            <div class="contact-avatar" style="background:${avatarColor(c.email)}">${avatarLetter(c.name, c.email)}</div>
+            <div class="contact-info">
+              <div class="contact-name">${escHtml(c.name || '(no name)')}</div>
+              <div class="contact-email">${escHtml(c.email)}</div>
+            </div>
+            <div class="contact-actions">
+              <button class="contact-btn" onclick="composeToContact('${escHtml(c.email)}')" title="Send email">✉</button>
+              <button class="contact-btn" onclick="openEditContact('${c.id}')" title="Edit">✎</button>
+              <button class="contact-btn danger" onclick="deleteContact('${c.id}')" title="Delete">🗑</button>
+            </div>
+          </div>`).join('')}
+        </div>`}`;
+}
+
+function avatarLetter(name, email) {
+  if (name?.trim()) return name.trim()[0].toUpperCase();
+  return email?.[0]?.toUpperCase() || '?';
+}
+
+function avatarColor(email) {
+  const colors = ['#7c6af7','#10b981','#f59e0b','#ef4444','#3b82f6','#8b5cf6','#ec4899','#06b6d4'];
+  let h = 0; for (const c of (email || '')) h = (h * 31 + c.charCodeAt(0)) % colors.length;
+  return colors[h];
+}
+
+function composeToContact(email) {
+  hidePanel();
+  openCompose({ to: email });
+}
+
+function openAddContact() {
+  openContactModal(null);
+}
+
+function openEditContact(id) {
+  const c = allContacts.find(x => x.id === id);
+  if (c) openContactModal(c);
+}
+
+function openContactModal(contact) {
+  const existing = document.getElementById('contact-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'contact-modal';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header">
+        <h3>${contact ? 'Edit Contact' : 'Add Contact'}</h3>
+        <button class="modal-close" onclick="document.getElementById('contact-modal').remove()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input type="text" id="cm-name" class="form-input" placeholder="Full name" value="${escHtml(contact?.name || '')}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="cm-email" class="form-input" placeholder="email@example.com" value="${escHtml(contact?.email || '')}">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('contact-modal').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveContact('${contact?.id || ''}')">Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(() => document.getElementById('cm-name').focus(), 50);
+}
+
+async function saveContact(id) {
+  const name = document.getElementById('cm-name').value.trim();
+  const email = document.getElementById('cm-email').value.trim();
+  if (!email) { showToast('Email is required', 'error'); return; }
+
+  if (id) {
+    await fetch(`/api/contacts/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email }) });
+  } else {
+    await fetch('/api/contacts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email }) });
+  }
+  document.getElementById('contact-modal').remove();
+  showToast(id ? 'Contact updated' : 'Contact added', 'success');
+  renderContactsPanel();
+}
+
+async function deleteContact(id) {
+  if (!confirm('Delete this contact?')) return;
+  await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+  showToast('Contact deleted', 'success');
+  renderContactsPanel();
+}
+
+// ─── SETTINGS PANEL ──────────────────────────────────────────────
+
+async function renderSettingsPanel() {
+  document.getElementById('full-panel-title').textContent = '⚙ Settings';
+  document.getElementById('full-panel-actions').innerHTML = '';
+
+  const res = await fetch('/api/settings');
+  const settings = await res.json();
+  const body = document.getElementById('full-panel-body');
+
+  body.innerHTML = `
+    <div class="settings-section">
+      <h3>Email Tracker</h3>
+      <div class="form-group">
+        <label class="form-label">Public URL <span style="color:var(--text2);font-weight:400">(recipients must be able to reach this)</span></label>
+        <input type="text" id="s-publicUrl" class="form-input" value="${escHtml(settings.publicUrl || 'http://localhost:3000')}" style="max-width:400px">
+      </div>
+      <p style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.6">
+        For tracking to work, this server must be reachable from the internet.<br>
+        Use <strong>ngrok</strong> or similar to expose it: <code style="color:var(--accent)">ngrok http 3000</code> → paste the https URL above.
+      </p>
+    </div>
+    <div style="margin-top:4px">
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>`;
+}
+
+async function saveSettings() {
+  const publicUrl = document.getElementById('s-publicUrl').value.trim();
+  await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ publicUrl }) });
+  showToast('Settings saved', 'success');
+}
+
+// ─── AUTOCOMPLETE ─────────────────────────────────────────────────
+
+async function acSearch(query) {
+  const list = document.getElementById('ac-list');
+  if (!query || query.length < 2) { list.style.display = 'none'; return; }
+  const res = await fetch(`/api/contacts?q=${encodeURIComponent(query)}`);
+  const contacts = await res.json();
+  if (!contacts.length) { list.style.display = 'none'; return; }
+  list.innerHTML = contacts.slice(0, 8).map((c, i) => `
+    <div class="autocomplete-item" onmousedown="acSelect('${escHtml(c.name ? c.name + ' <' + c.email + '>' : c.email)}')">
+      <div class="autocomplete-name">${escHtml(c.name || c.email)}</div>
+      ${c.name ? `<div class="autocomplete-email">${escHtml(c.email)}</div>` : ''}
+    </div>`).join('');
+  list.style.display = 'block';
+}
+
+function acSelect(value) {
+  document.getElementById('compose-to').value = value;
+  acHide();
+}
+
+function acHide() {
+  document.getElementById('ac-list').style.display = 'none';
+}
+
+// ─── KEYBOARD SHORTCUTS ───────────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'c' || e.key === 'n') openCompose();
+  if (e.key === 'r' && currentEmail) openReply(false);
+  if (e.key === 'f' && currentEmail) openForward();
+  if (e.key === 'Escape') { closeCompose(); closePasswordModal(); if (currentPanel) hidePanel(); }
+});
+
+init();
+</script>
+</body>
+</html>

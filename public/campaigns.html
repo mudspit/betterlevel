@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sherwin's Domain — Campaigns</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #000; --bg2: #0e0e0e; --bg3: #1a1a1a; --bg4: #222;
+    --border: #2a2a2a; --border2: #333;
+    --text: #fff; --text2: #8a8a8a; --text3: #bbb;
+    --accent: #f9b21b; --accent2: #e0a018; --accent-dim: rgba(249,178,27,.12);
+    --danger: #ef4444; --success: #10b981; --warn: #f59e0b;
+    --blue: #3b82f6; --purple: #8b5cf6;
+    --sidebar-w: 220px;
+    --radius: 8px;
+  }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; font-size: 14px; }
+
+  /* ── SIDEBAR ── */
+  #sidebar { width: var(--sidebar-w); background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .brand { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .brand-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .brand-name { font-weight: 700; font-size: 14px; }
+  .brand-sub { font-size: 11px; color: var(--accent); }
+  #sidebar nav { padding: 10px 8px; flex: 1; }
+  .nav-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: none; background: none; color: var(--text2); cursor: pointer; border-radius: 6px; font-size: 13px; text-align: left; transition: all .15s; text-decoration: none; }
+  .nav-btn:hover { background: var(--bg3); color: var(--text); }
+  .nav-btn.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+  .nav-btn .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .sidebar-footer { padding: 12px 8px; border-top: 1px solid var(--border); }
+
+  /* ── MAIN ── */
+  #main { flex: 1; overflow-y: auto; background: var(--bg); }
+
+  /* ── PAGE HEADER ── */
+  .page-header { padding: 24px 28px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--bg); position: sticky; top: 0; z-index: 10; }
+  .page-header h1 { font-size: 20px; font-weight: 700; flex: 1; }
+  .page-header p { font-size: 13px; color: var(--text2); flex: 1; }
+
+  /* ── BUTTONS ── */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .15s; }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: none; color: var(--danger); border: 1px solid var(--border); }
+  .btn-danger:hover { border-color: var(--danger); background: rgba(239,68,68,.08); }
+  .btn-ghost { background: none; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* ── VIEWS ── */
+  .view { display: none; padding: 28px; }
+  .view.active { display: block; }
+  .sub-view { display: none; }
+  .sub-view.active { display: block; }
+
+  /* ── STAT CARDS ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .stat-label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 700; color: var(--text); }
+  .stat-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .stat-card.accent { border-color: var(--accent); }
+  .stat-card.accent .stat-value { color: var(--accent); }
+
+  /* ── SECTION TITLE ── */
+  .section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+
+  /* ── AUDIENCES GRID ── */
+  .audiences-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .audience-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; cursor: pointer; transition: all .15s; position: relative; }
+  .audience-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .audience-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .audience-card p { font-size: 12px; color: var(--text2); margin-bottom: 16px; min-height: 18px; }
+  .audience-card-stats { display: flex; gap: 20px; }
+  .aud-stat { text-align: center; }
+  .aud-stat-val { font-size: 20px; font-weight: 700; color: var(--accent); }
+  .aud-stat-lbl { font-size: 11px; color: var(--text2); }
+  .audience-card-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+  .audience-card:hover .audience-card-actions { opacity: 1; }
+  .icon-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: 4px; padding: 4px 7px; cursor: pointer; font-size: 12px; transition: all .15s; }
+  .icon-btn:hover { color: var(--text); border-color: var(--border2); }
+  .icon-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+  /* ── TABLE ── */
+  .table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 11px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); border-bottom: 1px solid var(--border); text-align: left; background: var(--bg3); }
+  td { padding: 12px 16px; font-size: 13px; color: var(--text3); border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  .td-name { color: var(--text); font-weight: 500; }
+
+  /* ── STATUS BADGES ── */
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-draft { background: rgba(138,138,138,.15); color: var(--text2); }
+  .badge-sending { background: rgba(59,130,246,.15); color: var(--blue); }
+  .badge-sent { background: rgba(16,185,129,.15); color: var(--success); }
+  .badge-subscribed { background: rgba(16,185,129,.12); color: var(--success); }
+  .badge-unsubscribed { background: rgba(239,68,68,.12); color: var(--danger); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ── SEARCH BAR ── */
+  .search-row { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .search-input { flex: 1; background: var(--bg3); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 12px; font-size: 13px; outline: none; transition: border-color .2s; }
+  .search-input:focus { border-color: var(--accent); }
+  select.filter-select { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: 6px; padding: 8px 10px; font-size: 13px; outline: none; cursor: pointer; }
+  select.filter-select:focus { border-color: var(--accent); }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 60px 20px; color: var(--text2); }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: .4; }
+  .empty h3 { font-size: 16px; color: var(--text3); margin-bottom: 8px; }
+  .empty p { font-size: 13px; margin-bottom: 20px; }
+
+  /* ── OVERLAY (Campaign Builder) ── */
+  #builder-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: none; flex-direction: column; }
+  #builder-overlay.open { display: flex; }
+  #builder-top { display: flex; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--bg2); }
+  #builder-top h2 { font-size: 15px; font-weight: 600; flex: 1; }
+  .step-indicators { display: flex; gap: 4px; align-items: center; }
+  .step-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); color: var(--text2); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+  .step-dot.active { border-color: var(--accent); color: var(--accent); }
+  .step-dot.done { border-color: var(--success); background: var(--success); color: #fff; }
+  .step-line { width: 32px; height: 2px; background: var(--border); }
+  .step-label { font-size: 11px; color: var(--text2); margin-top: 4px; text-align: center; }
+  #builder-body { flex: 1; overflow-y: auto; }
+  #builder-footer { padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg2); display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+  .builder-step { display: none; padding: 28px; }
+  .builder-step.active { display: block; }
+
+  /* ── FORM ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 700px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+  input[type=text], input[type=email], textarea, select.form-select {
+    background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 9px 12px; font-size: 13px; outline: none;
+    transition: border-color .2s; font-family: inherit; width: 100%;
+  }
+  input[type=text]:focus, input[type=email]:focus, textarea:focus, select.form-select:focus { border-color: var(--accent); }
+  .form-hint { font-size: 11px; color: var(--text2); }
+
+  /* ── TEMPLATE PICKER ── */
+  .template-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .template-card { border: 2px solid var(--border); border-radius: var(--radius); padding: 14px 18px; cursor: pointer; transition: all .15s; text-align: center; min-width: 110px; }
+  .template-card:hover { border-color: var(--border2); }
+  .template-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+  .template-card .t-icon { font-size: 28px; margin-bottom: 6px; }
+  .template-card .t-name { font-size: 12px; font-weight: 600; color: var(--text3); }
+
+  /* ── EDITOR / PREVIEW SPLIT ── */
+  #editor-split { display: flex; gap: 16px; height: 60vh; }
+  #editor-left { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  #html-editor { flex: 1; background: var(--bg3); border: 1px solid var(--border); color: #d4d4d4; border-radius: 6px; padding: 12px; font-family: 'Courier New', monospace; font-size: 12px; resize: none; outline: none; line-height: 1.5; }
+  #html-editor:focus { border-color: var(--accent); }
+  .block-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .block-btn { background: var(--bg4); border: 1px solid var(--border); color: var(--text2); border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; transition: all .15s; }
+  .block-btn:hover { border-color: var(--accent); color: var(--accent); }
+  #editor-right { width: 380px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
+  #editor-right label { font-size: 11px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  #preview-frame { flex: 1; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+
+  /* ── REVIEW STEP ── */
+  .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 800px; }
+  .review-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .review-panel h3 { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 14px; }
+  .review-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .review-row:last-child { border-bottom: none; }
+  .review-key { color: var(--text2); }
+  .review-val { color: var(--text); text-align: right; max-width: 240px; word-break: break-all; }
+  .test-send-row { display: flex; gap: 8px; margin-top: 12px; }
+  .test-send-row input { flex: 1; }
+  #review-preview { width: 100%; height: 300px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+
+  /* ── MODAL (small) ── */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; display: none; }
+  .modal-backdrop.open { display: flex; align-items: center; justify-content: center; }
+  .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .modal-box.sm { max-width: 420px; }
+  .modal-box.md { max-width: 580px; }
+  .modal-box.lg { max-width: 760px; }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+  .modal-title button { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 20px; line-height: 1; padding: 0; }
+  .modal-title button:hover { color: var(--text); }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  /* ── STATS MODAL ── */
+  .stats-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .stats-chip { flex: 1; min-width: 100px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 12px; text-align: center; }
+  .stats-chip-val { font-size: 22px; font-weight: 700; }
+  .stats-chip-lbl { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  /* ── BACK LINK ── */
+  .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text2); font-size: 13px; cursor: pointer; margin-bottom: 20px; transition: color .15s; background: none; border: none; padding: 0; }
+  .back-link:hover { color: var(--accent); }
+
+  /* ── IMPORT ── */
+  #csv-drop { border: 2px dashed var(--border); border-radius: var(--radius); padding: 30px; text-align: center; cursor: pointer; transition: border-color .2s; color: var(--text2); }
+  #csv-drop:hover, #csv-drop.drag { border-color: var(--accent); color: var(--accent); }
+  #csv-preview-table { max-height: 200px; overflow-y: auto; margin-top: 12px; }
+
+  /* ── MERGE TAG CHIPS ── */
+  .tag-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag-chip { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); padding: 2px 8px; border-radius: 12px; font-size: 11px; cursor: pointer; transition: all .15s; }
+  .tag-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── TOAST ── */
+  #toast { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+  .toast-item { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: 13px; max-width: 320px; display: flex; align-items: center; gap: 10px; animation: slideIn .2s ease; }
+  .toast-item.success { border-color: var(--success); }
+  .toast-item.error { border-color: var(--danger); }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+  .tag-input { display: flex; flex-wrap: wrap; gap: 4px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; cursor: text; }
+  .tag-input input { background: none; border: none; color: var(--text); outline: none; font-size: 13px; min-width: 80px; flex: 1; }
+  .tag-pill { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(249,178,27,.3); border-radius: 12px; padding: 2px 8px; font-size: 11px; display: flex; align-items: center; gap: 4px; }
+  .tag-pill button { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0; font-size: 12px; line-height: 1; }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="brand">
+    <div class="brand-icon">✉</div>
+    <div>
+      <div class="brand-name">Sherwin's Domain</div>
+      <div class="brand-sub">Campaign Manager</div>
+    </div>
+  </div>
+  <nav>
+    <button class="nav-btn active" data-view="dashboard" onclick="showView('dashboard')">
+      <span class="nav-icon">📊</span> Dashboard
+    </button>
+    <button class="nav-btn" data-view="audiences" onclick="showView('audiences')">
+      <span class="nav-icon">👥</span> Audiences
+    </button>
+    <button class="nav-btn" data-view="campaigns" onclick="showView('campaigns')">
+      <span class="nav-icon">📧</span> Campaigns
+    </button>
+    <button class="nav-btn" data-view="settings" onclick="showView('settings')">
+      <span class="nav-icon">⚙</span> Settings
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="/" class="nav-btn"><span class="nav-icon">←</span> Back to Inbox</a>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+  <!-- DASHBOARD VIEW -->
+  <div id="view-dashboard" class="view active">
+    <div class="page-header" style="position:static;margin:-28px -28px 28px;padding:24px 28px 20px">
+      <div>
+        <h1>Dashboard</h1>
+        <p style="font-size:13px;color:var(--text2);margin-top:4px">Your email marketing overview</p>
+      </div>
+    </div>
+    <div class="stats-grid" id="dash-stats">
+      <div class="stat-card"><div class="stat-label">Total Subscribers</div><div class="stat-value" id="ds-subs">—</div><div class="stat-sub">across all audiences</div></div>
+      <div class="stat-card accent"><div class="stat-label">Campaigns Sent</div><div class="stat-value" id="ds-sent">—</div><div class="stat-sub">total campaigns</div></div>
+      <div class="stat-card"><div class="stat-label">Emails Delivered</div><div class="stat-value" id="ds-delivered">—</div><div class="stat-sub">all time</div></div>
+      <div class="stat-card"><div class="stat-label">Avg Open Rate</div><div class="stat-value" id="ds-opens">—</div><div class="stat-sub">across sent campaigns</div></div>
+    </div>
+    <div class="section-title">Recent Campaigns</div>
+    <div id="dash-campaigns"></div>
+  </div>
+
+  <!-- AUDIENCES VIEW -->
+  <div id="view-audiences" class="view">
+
+    <!-- List of audiences -->
+    <div id="audiences-list-view" class="sub-view active">
+      <div class="page-header" style="position:static;margin:-28px -28px 28px;padding:24px 28px 20px">
+        <h1>Audiences</h1>
+        <button class="btn btn-primary" onclick="openNewAudienceModal()">+ New Audience</button>
+      </div>
+      <div id="audiences-grid" class="audiences-grid"></div>
+    </div>
+
+    <!-- Audience detail -->
+    <div id="audience-detail-view" class="sub-view">
+      <button class="back-link" onclick="showAudienceList()">← Back to Audiences</button>
+      <div class="page-header" style="position:static;margin:-28px -28px 20px;padding:20px 28px 16px">
+        <div style="flex:1">
+          <h1 id="detail-audience-name">Audience</h1>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px" id="detail-audience-desc"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="openImportModal()">⬆ Import CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="btn btn-primary" onclick="openAddSubModal()">+ Add Subscriber</button>
+      </div>
+      <div class="search-row" style="margin-bottom:16px">
+        <input type="text" class="search-input" id="sub-search" placeholder="Search subscribers…" oninput="filterSubs()">
+        <select class="filter-select" id="sub-filter" onchange="filterSubs()">
+          <option value="">All Status</option>
+          <option value="subscribed">Subscribed</option>
+          <option value="unsubscribed">Unsubscribed</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Email</th><th>Name</th><th>Tags</th><th>Status</th><th>Added</th><th style="width:100px">Actions</th></tr></thead>
+          <tbody id="subs-tbody"></tbody>
+        </table>
+      </div>
+      <div id="subs-empty" class="empty" style="display:none">
+        <div class="empty-icon">👤</div>
+        <h3>No subscribers yet</h3>
+        <p>Add subscribers manually or import a CSV file.</p>
+        <button class="btn btn-primary" onclick="openAddSubModal()">+ Add Subscriber</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div id="view-settings" class="view">
+    <div class="page-header" style="position:static;margin:-28px -28px 28px;padding:24px 28px 20px">
+      <h1>Settings</h1>
+      <button class="btn btn-primary" onclick="saveConfig()">Save Changes</button>
+    </div>
+    <div style="max-width:560px;display:flex;flex-direction:column;gap:20px">
+      <div class="review-panel">
+        <h3>Brand & Appearance</h3>
+        <div class="form-grid" style="margin-top:14px">
+          <div class="form-group">
+            <label>Brand Name</label>
+            <input type="text" id="cfg-brandName" placeholder="Your Company Name">
+          </div>
+          <div class="form-group">
+            <label>Tagline</label>
+            <input type="text" id="cfg-tagline" placeholder="Email Marketing">
+          </div>
+          <div class="form-group">
+            <label>Logo Icon / Emoji</label>
+            <input type="text" id="cfg-logoText" placeholder="✉" style="max-width:120px">
+          </div>
+          <div class="form-group">
+            <label>Primary Color</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="color" id="cfg-primaryColor" value="#f9b21b" style="width:44px;height:36px;padding:2px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;cursor:pointer">
+              <input type="text" id="cfg-primaryColorHex" placeholder="#f9b21b" style="flex:1" oninput="syncColorPicker(this)">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="review-panel">
+        <h3>Compliance &amp; Contact <span style="font-size:11px;color:var(--warn);font-weight:400;text-transform:none;letter-spacing:0">(CAN-SPAM required)</span></h3>
+        <div class="form-grid" style="margin-top:14px">
+          <div class="form-group full">
+            <label>Physical Mailing Address</label>
+            <input type="text" id="cfg-address" placeholder="123 Main St, City, ST 12345">
+            <div class="form-hint">Included in every campaign footer — legally required</div>
+          </div>
+          <div class="form-group">
+            <label>Support Email</label>
+            <input type="email" id="cfg-supportEmail" placeholder="support@yourdomain.com">
+          </div>
+          <div class="form-group">
+            <label>Website URL</label>
+            <input type="text" id="cfg-websiteUrl" placeholder="https://yourdomain.com">
+          </div>
+        </div>
+      </div>
+      <div class="review-panel">
+        <h3>Public URL (for tracking &amp; forms)</h3>
+        <div class="form-group" style="margin-top:14px">
+          <label>Public URL</label>
+          <input type="text" id="cfg-publicUrl" placeholder="https://yourdomain.com">
+          <div class="form-hint">Used for open/click tracking pixels and signup form links. Set your Cloudflare tunnel URL here.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAMPAIGNS VIEW -->
+  <div id="view-campaigns" class="view">
+    <div class="page-header" style="position:static;margin:-28px -28px 28px;padding:24px 28px 20px">
+      <h1>Campaigns</h1>
+      <button class="btn btn-primary" onclick="openBuilder(null)">+ New Campaign</button>
+    </div>
+    <div id="campaigns-table-wrap" class="table-wrap">
+      <table>
+        <thead><tr><th>Campaign</th><th>Audience</th><th>Status</th><th>Sent</th><th>Opens</th><th>Clicks</th><th>Date</th><th style="width:120px">Actions</th></tr></thead>
+        <tbody id="campaigns-tbody"></tbody>
+      </table>
+    </div>
+    <div id="campaigns-empty" class="empty" style="display:none">
+      <div class="empty-icon">📧</div>
+      <h3>No campaigns yet</h3>
+      <p>Create your first campaign to start reaching your audience.</p>
+      <button class="btn btn-primary" onclick="openBuilder(null)">+ New Campaign</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     CAMPAIGN BUILDER (full-screen overlay)
+══════════════════════════════════════════════════════════════════════════════ -->
+<div id="builder-overlay">
+  <div id="builder-top">
+    <div class="step-indicators" id="step-indicators">
+      <div style="text-align:center">
+        <div class="step-dot active" id="si-1">1</div>
+        <div class="step-label">Setup</div>
+      </div>
+      <div class="step-line"></div>
+      <div style="text-align:center">
+        <div class="step-dot" id="si-2">2</div>
+        <div class="step-label">Design</div>
+      </div>
+      <div class="step-line"></div>
+      <div style="text-align:center">
+        <div class="step-dot" id="si-3">3</div>
+        <div class="step-label">Send</div>
+      </div>
+    </div>
+    <h2 id="builder-title" style="margin-left:20px">New Campaign</h2>
+    <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="closeBuilder()">✕ Close</button>
+  </div>
+
+  <div id="builder-body">
+
+    <!-- STEP 1: Setup -->
+    <div class="builder-step active" id="bstep-1">
+      <h2 style="font-size:18px;margin-bottom:6px">Campaign Setup</h2>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:24px">Name your campaign and configure sender info</p>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Campaign Name <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="f-name" placeholder="e.g. July Newsletter">
+          <div class="form-hint">Internal name — not shown to recipients</div>
+        </div>
+        <div class="form-group">
+          <label>Send From Account <span style="color:var(--danger)">*</span></label>
+          <select class="form-select" id="f-account"></select>
+        </div>
+        <div class="form-group">
+          <label>Audience <span style="color:var(--danger)">*</span></label>
+          <select class="form-select" id="f-list"></select>
+        </div>
+        <div class="form-group">
+          <label>Sender Name</label>
+          <input type="text" id="f-fromName" placeholder="e.g. ArtXtreme Newsletter">
+        </div>
+        <div class="form-group">
+          <label>Reply-To Email</label>
+          <input type="email" id="f-replyTo" placeholder="optional">
+        </div>
+        <div class="form-group full">
+          <label>Subject Line <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="f-subject" placeholder="e.g. July Newsletter — What's New This Month">
+          <div class="tag-chips" id="merge-chips-subject">
+            <span style="font-size:11px;color:var(--text2)">Insert:</span>
+            <span class="tag-chip" onclick="insertTag('f-subject','{{firstName}}')">{{firstName}}</span>
+            <span class="tag-chip" onclick="insertTag('f-subject','{{fullName}}')">{{fullName}}</span>
+            <span class="tag-chip" onclick="insertTag('f-subject','{{email}}')">{{email}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Design -->
+    <div class="builder-step" id="bstep-2">
+      <h2 style="font-size:18px;margin-bottom:6px">Email Design</h2>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Start with a template or write your own HTML</p>
+      <div class="template-row" id="template-row"></div>
+      <div id="editor-split">
+        <div id="editor-left">
+          <div class="block-btns" id="block-btns"></div>
+          <textarea id="html-editor" placeholder="Paste or write your email HTML here…" oninput="schedulePreview()"></textarea>
+          <div class="tag-chips">
+            <span style="font-size:11px;color:var(--text2)">Merge tags:</span>
+            <span class="tag-chip" onclick="insertHtmlTag('{{firstName}}')">{{firstName}}</span>
+            <span class="tag-chip" onclick="insertHtmlTag('{{fullName}}')">{{fullName}}</span>
+            <span class="tag-chip" onclick="insertHtmlTag('{{email}}')">{{email}}</span>
+            <span class="tag-chip" onclick="insertHtmlTag('{{fromName}}')">{{fromName}}</span>
+            <span class="tag-chip" onclick="insertHtmlTag('{{unsubscribeUrl}}')">{{unsubscribeUrl}}</span>
+          </div>
+        </div>
+        <div id="editor-right">
+          <label>Live Preview</label>
+          <iframe id="preview-frame" sandbox="allow-same-origin"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Review & Send -->
+    <div class="builder-step" id="bstep-3">
+      <h2 style="font-size:18px;margin-bottom:6px">Review & Send</h2>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:24px">Double-check everything before sending to your audience</p>
+      <div class="review-grid">
+        <div>
+          <div class="review-panel" style="margin-bottom:16px">
+            <h3>Campaign Summary</h3>
+            <div class="review-row"><span class="review-key">Name</span><span class="review-val" id="rv-name">—</span></div>
+            <div class="review-row"><span class="review-key">Subject</span><span class="review-val" id="rv-subject">—</span></div>
+            <div class="review-row"><span class="review-key">From</span><span class="review-val" id="rv-from">—</span></div>
+            <div class="review-row"><span class="review-key">Reply-To</span><span class="review-val" id="rv-replyto">—</span></div>
+            <div class="review-row"><span class="review-key">Audience</span><span class="review-val" id="rv-list">—</span></div>
+            <div class="review-row"><span class="review-key">Recipients</span><span class="review-val" id="rv-count" style="color:var(--accent);font-weight:700">—</span></div>
+          </div>
+          <div class="review-panel">
+            <h3>Send Test Email</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Send yourself a preview before sending to your list</p>
+            <div class="test-send-row">
+              <input type="email" id="test-email-input" placeholder="your@email.com" class="search-input" style="flex:1">
+              <button class="btn btn-secondary" onclick="sendTestEmail()">Send Test</button>
+            </div>
+            <div id="test-status" style="font-size:12px;margin-top:8px;color:var(--success);display:none"></div>
+          </div>
+        </div>
+        <div>
+          <div class="review-panel">
+            <h3>Email Preview</h3>
+            <iframe id="review-preview" sandbox="allow-same-origin"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /builder-body -->
+
+  <!-- Schedule panel (sits between body and footer, shown on step 3) -->
+  <div id="schedule-panel" style="display:none;padding:0 28px 20px;border-top:1px solid var(--border)">
+    <div class="review-panel" style="max-width:800px;margin-top:20px">
+      <h3>When to Send</h3>
+      <div style="display:flex;gap:24px;align-items:center;margin-top:14px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text);font-size:13px;font-weight:normal;text-transform:none;letter-spacing:0">
+          <input type="radio" name="send-timing" value="now" checked onchange="toggleSchedule(this)"> Send immediately
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text);font-size:13px;font-weight:normal;text-transform:none;letter-spacing:0">
+          <input type="radio" name="send-timing" value="schedule" onchange="toggleSchedule(this)"> Schedule for later
+        </label>
+      </div>
+      <div id="schedule-dt-wrap" style="display:none;margin-top:14px">
+        <input type="datetime-local" id="schedule-datetime" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:9px 12px;font-size:13px;outline:none;font-family:inherit">
+        <div class="form-hint" style="margin-top:6px">Campaign sends automatically at this time — server must be running</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="builder-footer">
+    <div style="flex:1;font-size:12px;color:var(--text2)" id="builder-status"></div>
+    <button class="btn btn-ghost" id="btn-prev" onclick="builderPrev()" style="display:none">← Back</button>
+    <button class="btn btn-secondary" id="btn-save" onclick="saveDraftAndClose()">Save Draft</button>
+    <button class="btn btn-primary" id="btn-next" onclick="builderNext()">Continue →</button>
+    <button class="btn btn-primary" id="btn-send" onclick="confirmSend()" style="display:none;background:var(--success);color:#fff">🚀 Send Campaign</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SMALL MODALS
+══════════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="backdrop" onclick="closeModalByBackdrop(event)">
+
+  <!-- New Audience Modal -->
+  <div class="modal-box sm" id="modal-new-audience">
+    <div class="modal-title">New Audience <button onclick="closeModal('modal-new-audience')">×</button></div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Audience Name *</label>
+      <input type="text" id="na-name" placeholder="e.g. Newsletter Subscribers" class="search-input" style="margin-top:4px">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <input type="text" id="na-desc" placeholder="Optional description" class="search-input" style="margin-top:4px">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-new-audience')">Cancel</button>
+      <button class="btn btn-primary" onclick="createAudience()">Create Audience</button>
+    </div>
+  </div>
+
+  <!-- Add Subscriber Modal -->
+  <div class="modal-box sm" id="modal-add-sub" style="display:none">
+    <div class="modal-title">Add Subscriber <button onclick="closeModal('modal-add-sub')">×</button></div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Email *</label>
+      <input type="email" id="as-email" placeholder="subscriber@example.com" class="search-input" style="margin-top:4px">
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Name</label>
+      <input type="text" id="as-name" placeholder="Full name" class="search-input" style="margin-top:4px">
+    </div>
+    <div class="form-group">
+      <label>Tags</label>
+      <div class="tag-input" id="as-tags-input" onclick="document.getElementById('as-tag-field').focus()">
+        <input type="text" id="as-tag-field" placeholder="Add tag, press Enter" onkeydown="handleTagInput(event)">
+      </div>
+      <div class="form-hint">Press Enter to add a tag</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-sub')">Cancel</button>
+      <button class="btn btn-primary" onclick="addSubscriber()">Add Subscriber</button>
+    </div>
+  </div>
+
+  <!-- Import CSV Modal -->
+  <div class="modal-box lg" id="modal-import" style="display:none">
+    <div class="modal-title">Import Subscribers <button onclick="closeModal('modal-import')">×</button></div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Upload a CSV file with columns: <strong>email</strong>, name (optional), tags (optional, comma-separated)</p>
+    <div id="csv-drop" onclick="document.getElementById('csv-file').click()" ondragover="csvDragOver(event)" ondragleave="csvDragLeave(event)" ondrop="csvDrop(event)">
+      <div style="font-size:32px;margin-bottom:8px">📁</div>
+      <div style="font-weight:600">Click or drag & drop a CSV file</div>
+      <div style="font-size:12px;margin-top:4px">First row should be headers: email, name, tags</div>
+    </div>
+    <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="loadCSVFile(event)">
+    <div id="csv-preview-wrap" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;margin-top:16px;margin-bottom:8px">
+        <span id="csv-count" style="font-size:13px;color:var(--text2)"></span>
+        <button class="btn btn-ghost btn-sm" onclick="clearCSV()">Clear</button>
+      </div>
+      <div id="csv-preview-table" class="table-wrap"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-import')">Cancel</button>
+      <button class="btn btn-primary" id="btn-import" onclick="importSubscribers()" disabled>Import</button>
+    </div>
+  </div>
+
+  <!-- Embed Signup Form Modal -->
+  <div class="modal-box lg" id="modal-embed" style="display:none">
+    <div class="modal-title">Embed Signup Form <button onclick="closeModal('modal-embed')">×</button></div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px">Share the form URL or embed it on any website. Subscribers go directly into this audience.</p>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="form-group">
+        <label>Form URL (direct link)</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <input type="text" id="embed-url" class="search-input" readonly style="flex:1;font-family:monospace;font-size:12px">
+          <button class="btn btn-ghost btn-sm" onclick="copyField('embed-url')">Copy</button>
+          <a id="embed-open-btn" href="#" target="_blank" class="btn btn-ghost btn-sm">Open ↗</a>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>HTML Form (paste into your website)</label>
+        <div style="display:flex;gap:8px;margin-top:6px;align-items:flex-start">
+          <textarea id="embed-html" class="search-input" rows="7" readonly style="flex:1;font-family:monospace;font-size:11px;resize:none"></textarea>
+          <button class="btn btn-ghost btn-sm" onclick="copyField('embed-html')">Copy</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>iFrame Embed</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <input type="text" id="embed-iframe" class="search-input" readonly style="flex:1;font-family:monospace;font-size:11px">
+          <button class="btn btn-ghost btn-sm" onclick="copyField('embed-iframe')">Copy</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <label style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Form Preview</label>
+      <iframe id="embed-preview" style="width:100%;height:300px;border:1px solid var(--border);border-radius:6px;background:#fff;margin-top:8px" sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe>
+    </div>
+  </div>
+
+  <!-- Campaign Stats Modal -->
+  <div class="modal-box lg" id="modal-stats" style="display:none">
+    <div class="modal-title">Campaign Stats <button onclick="closeModal('modal-stats')">×</button></div>
+    <div class="stats-row" id="stats-chips"></div>
+    <div class="section-title" style="font-size:13px;margin-bottom:8px">Click Map</div>
+    <div id="stats-clicks" class="table-wrap" style="margin-bottom:20px"></div>
+    <div class="section-title" style="font-size:13px;margin-bottom:8px">Recipient Log</div>
+    <div id="stats-recipients" class="table-wrap"></div>
+  </div>
+
+</div><!-- /backdrop -->
+
+<!-- TOAST CONTAINER -->
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════════════════════════════ */
+const S = {
+  lists: [],
+  campaigns: [],
+  accounts: [],
+  currentListId: null,
+  currentSubs: [],
+  currentCampaign: null, // campaign being built
+  campaignId: null,      // ID of campaign currently being edited/created
+  builderStep: 1,
+  csvParsed: [],
+  subTags: [],
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   API HELPERS
+══════════════════════════════════════════════════════════════════════════════ */
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({ error: r.statusText }));
+    throw new Error(e.error || r.statusText);
+  }
+  return r.json();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════════════════════ */
+async function init() {
+  [S.accounts, S.lists, S.campaigns] = await Promise.all([
+    api('GET', '/api/accounts'),
+    api('GET', '/api/lists'),
+    api('GET', '/api/campaigns'),
+  ]);
+  await loadConfig();
+  renderDashboard();
+  renderAudiencesGrid();
+  renderCampaignsTable();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONFIG / WHITE-LABEL
+══════════════════════════════════════════════════════════════════════════════ */
+let CFG = {};
+
+async function loadConfig() {
+  try { CFG = await api('GET', '/api/config'); } catch { CFG = {}; }
+  applyConfig();
+}
+
+function applyConfig() {
+  if (CFG.brandName) document.querySelector('.brand-name').textContent = CFG.brandName;
+  if (CFG.tagline) document.querySelector('.brand-sub').textContent = CFG.tagline;
+  if (CFG.logoText) document.querySelector('.brand-icon').textContent = CFG.logoText;
+  if (CFG.primaryColor) {
+    document.documentElement.style.setProperty('--accent', CFG.primaryColor);
+    document.documentElement.style.setProperty('--accent2', CFG.primaryColor);
+  }
+  // Populate settings form fields
+  const fields = ['brandName','tagline','logoText','address','supportEmail','websiteUrl'];
+  fields.forEach(k => { const el = document.getElementById(`cfg-${k}`); if (el) el.value = CFG[k] || ''; });
+  const cp = document.getElementById('cfg-primaryColor');
+  const ch = document.getElementById('cfg-primaryColorHex');
+  if (cp) cp.value = CFG.primaryColor || '#f9b21b';
+  if (ch) ch.value = CFG.primaryColor || '#f9b21b';
+  const pu = document.getElementById('cfg-publicUrl');
+  if (pu) pu.value = CFG.publicUrl || '';
+}
+
+function syncColorPicker(hexInput) {
+  const val = hexInput.value;
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    document.getElementById('cfg-primaryColor').value = val;
+    document.documentElement.style.setProperty('--accent', val);
+  }
+}
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'cfg-primaryColor') {
+    document.getElementById('cfg-primaryColorHex').value = e.target.value;
+    document.documentElement.style.setProperty('--accent', e.target.value);
+  }
+});
+
+async function saveConfig() {
+  const cfg = {
+    brandName: document.getElementById('cfg-brandName').value.trim(),
+    tagline: document.getElementById('cfg-tagline').value.trim(),
+    logoText: document.getElementById('cfg-logoText').value.trim(),
+    primaryColor: document.getElementById('cfg-primaryColor').value,
+    address: document.getElementById('cfg-address').value.trim(),
+    supportEmail: document.getElementById('cfg-supportEmail').value.trim(),
+    websiteUrl: document.getElementById('cfg-websiteUrl').value.trim(),
+    publicUrl: document.getElementById('cfg-publicUrl').value.trim(),
+  };
+  // Also save publicUrl to settings endpoint so tracking works
+  if (cfg.publicUrl) api('POST', '/api/settings', { publicUrl: cfg.publicUrl }).catch(() => {});
+  CFG = await api('POST', '/api/config', cfg);
+  applyConfig();
+  toast('Settings saved', 'success');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMBED SIGNUP FORM
+══════════════════════════════════════════════════════════════════════════════ */
+async function openEmbedModal(e, listId) {
+  e.stopPropagation();
+  const settings = await api('GET', '/api/settings');
+  const publicUrl = (CFG.publicUrl || settings.publicUrl || 'http://localhost:3000').replace(/\/$/, '');
+  const formUrl = `${publicUrl}/subscribe/${listId}`;
+  document.getElementById('embed-url').value = formUrl;
+  document.getElementById('embed-open-btn').href = formUrl;
+  document.getElementById('embed-iframe').value = `<iframe src="${formUrl}" width="100%" height="360" frameborder="0" style="border:none;max-width:480px"></iframe>`;
+  document.getElementById('embed-html').value =
+`<form action="${formUrl}" method="post" style="font-family:sans-serif;max-width:420px;padding:24px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+  <h3 style="margin:0 0 16px;color:#1a1a1a">Subscribe</h3>
+  <input type="text" name="firstName" placeholder="First name" style="width:100%;padding:10px 12px;border:1px solid #e5e5e5;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:10px">
+  <input type="email" name="email" placeholder="Email address *" required style="width:100%;padding:10px 12px;border:1px solid #e5e5e5;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:14px">
+  <button type="submit" style="width:100%;padding:12px;background:${CFG.primaryColor||'#f9b21b'};color:#000;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer">Subscribe →</button>
+</form>`;
+  document.getElementById('embed-preview').src = formUrl;
+  openModal('modal-embed');
+}
+
+function copyField(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.value).then(() => toast('Copied to clipboard', 'success')).catch(() => {
+    el.select(); document.execCommand('copy'); toast('Copied!', 'success');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIEW ROUTING
+══════════════════════════════════════════════════════════════════════════════ */
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`view-${v}`).classList.add('active');
+  const navBtn = document.querySelector(`[data-view="${v}"]`);
+  if (navBtn) navBtn.classList.add('active');
+  if (v === 'dashboard') renderDashboard();
+  if (v === 'audiences') renderAudiencesGrid();
+  if (v === 'campaigns') renderCampaignsTable();
+  if (v === 'settings') applyConfig();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════════════════════════════════ */
+function renderDashboard() {
+  const totalSubs = S.lists.reduce((n, l) => n + (l.subscriberCount || 0), 0);
+  const sentCampaigns = S.campaigns.filter(c => c.status === 'sent');
+  const delivered = sentCampaigns.reduce((n, c) => n + (c.stats?.delivered || 0), 0);
+  const avgOpen = sentCampaigns.length
+    ? Math.round(sentCampaigns.reduce((n, c) => n + (c.stats?.delivered ? (c.stats.opens / c.stats.delivered) * 100 : 0), 0) / sentCampaigns.length)
+    : 0;
+  document.getElementById('ds-subs').textContent = totalSubs.toLocaleString();
+  document.getElementById('ds-sent').textContent = sentCampaigns.length;
+  document.getElementById('ds-delivered').textContent = delivered.toLocaleString();
+  document.getElementById('ds-opens').textContent = avgOpen + '%';
+
+  const recent = S.campaigns.slice(0, 6);
+  if (!recent.length) {
+    document.getElementById('dash-campaigns').innerHTML = `<div class="empty"><div class="empty-icon">📧</div><h3>No campaigns yet</h3><p>Create your first campaign to start sending.</p><button class="btn btn-primary" onclick="showView('campaigns');openBuilder(null)">+ New Campaign</button></div>`;
+    return;
+  }
+  document.getElementById('dash-campaigns').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Campaign</th><th>Status</th><th>Sent</th><th>Opens</th><th>Date</th></tr></thead><tbody>${
+    recent.map(c => `<tr>
+      <td class="td-name">${esc(c.name)}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td>${c.stats?.delivered || 0}</td>
+      <td>${c.stats?.opens || 0}${c.stats?.delivered ? ' (' + Math.round((c.stats.opens / c.stats.delivered) * 100) + '%)' : ''}</td>
+      <td>${fmtDate(c.sentAt || c.createdAt)}</td>
+    </tr>`).join('')
+  }</tbody></table></div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AUDIENCES
+══════════════════════════════════════════════════════════════════════════════ */
+function renderAudiencesGrid() {
+  const grid = document.getElementById('audiences-grid');
+  if (!S.lists.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">👥</div><h3>No audiences yet</h3><p>Create an audience to manage your subscribers.</p><button class="btn btn-primary" onclick="openNewAudienceModal()">+ New Audience</button></div>`;
+    return;
+  }
+  grid.innerHTML = S.lists.map(l => `
+    <div class="audience-card" onclick="showAudienceDetail('${l.id}')">
+      <div class="audience-card-actions">
+        <button class="icon-btn" title="Embed signup form" onclick="openEmbedModal(event,'${l.id}')">🔗</button>
+        <button class="icon-btn" onclick="editAudience(event,'${l.id}','${esc(l.name)}','${esc(l.description||'')}')">✏</button>
+        <button class="icon-btn danger" onclick="deleteAudience(event,'${l.id}')">🗑</button>
+      </div>
+      <h3>${esc(l.name)}</h3>
+      <p>${esc(l.description || 'No description')}</p>
+      <div class="audience-card-stats">
+        <div class="aud-stat"><div class="aud-stat-val">${l.subscriberCount || 0}</div><div class="aud-stat-lbl">Subscribed</div></div>
+        <div class="aud-stat"><div class="aud-stat-val">${(l.totalCount || 0) - (l.subscriberCount || 0)}</div><div class="aud-stat-lbl">Unsubscribed</div></div>
+        <div class="aud-stat"><div class="aud-stat-val">${l.totalCount || 0}</div><div class="aud-stat-lbl">Total</div></div>
+      </div>
+    </div>`).join('');
+}
+
+async function showAudienceDetail(listId) {
+  S.currentListId = listId;
+  const list = S.lists.find(l => l.id === listId);
+  document.getElementById('detail-audience-name').textContent = list.name;
+  document.getElementById('detail-audience-desc').textContent = list.description || '';
+  document.getElementById('audiences-list-view').classList.remove('active');
+  document.getElementById('audience-detail-view').classList.add('active');
+  await loadSubs();
+}
+
+function showAudienceList() {
+  document.getElementById('audience-detail-view').classList.remove('active');
+  document.getElementById('audiences-list-view').classList.add('active');
+}
+
+async function loadSubs() {
+  const subs = await api('GET', `/api/lists/${S.currentListId}/subscribers`);
+  S.currentSubs = subs;
+  renderSubs(subs);
+}
+
+function filterSubs() {
+  const q = document.getElementById('sub-search').value.toLowerCase();
+  const status = document.getElementById('sub-filter').value;
+  let subs = S.currentSubs;
+  if (q) subs = subs.filter(s => s.email.toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q));
+  if (status) subs = subs.filter(s => s.status === status);
+  renderSubs(subs);
+}
+
+function renderSubs(subs) {
+  const tbody = document.getElementById('subs-tbody');
+  const empty = document.getElementById('subs-empty');
+  if (!subs.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = subs.map(s => `<tr>
+    <td class="td-name">${esc(s.email)}</td>
+    <td>${esc(s.name || '—')}</td>
+    <td>${(s.tags||[]).map(t => `<span class="tag-pill" style="margin-right:3px">${esc(t)}</span>`).join('')}</td>
+    <td>${s.status === 'subscribed'
+      ? '<span class="badge badge-subscribed"><span class="dot"></span>Subscribed</span>'
+      : '<span class="badge badge-unsubscribed"><span class="dot"></span>Unsubscribed</span>'}</td>
+    <td>${fmtDate(s.addedAt)}</td>
+    <td>
+      <button class="icon-btn" onclick="toggleSubStatus('${s.id}','${s.status}')">${s.status==='subscribed'?'🚫':'✓'}</button>
+      <button class="icon-btn danger" onclick="deleteSub('${s.id}')">🗑</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function toggleSubStatus(subId, currentStatus) {
+  const newStatus = currentStatus === 'subscribed' ? 'unsubscribed' : 'subscribed';
+  await api('PUT', `/api/lists/${S.currentListId}/subscribers/${subId}`, { status: newStatus });
+  await loadSubs();
+  S.lists = await api('GET', '/api/lists');
+  toast('Status updated', 'success');
+}
+
+async function deleteSub(subId) {
+  if (!confirm('Remove this subscriber?')) return;
+  await api('DELETE', `/api/lists/${S.currentListId}/subscribers/${subId}`);
+  await loadSubs();
+  S.lists = await api('GET', '/api/lists');
+  toast('Subscriber removed', 'success');
+}
+
+/* ── New Audience ─────────────────────────────────────────────────────────── */
+function openNewAudienceModal() {
+  document.getElementById('na-name').value = '';
+  document.getElementById('na-desc').value = '';
+  openModal('modal-new-audience');
+}
+
+async function createAudience() {
+  const name = document.getElementById('na-name').value.trim();
+  const description = document.getElementById('na-desc').value.trim();
+  if (!name) { toast('Name required', 'error'); return; }
+  await api('POST', '/api/lists', { name, description });
+  S.lists = await api('GET', '/api/lists');
+  closeModal('modal-new-audience');
+  renderAudiencesGrid();
+  toast('Audience created', 'success');
+}
+
+async function editAudience(e, id, name, desc) {
+  e.stopPropagation();
+  const newName = prompt('Audience name:', name);
+  if (!newName) return;
+  const newDesc = prompt('Description:', desc);
+  await api('PUT', `/api/lists/${id}`, { name: newName, description: newDesc || '' });
+  S.lists = await api('GET', '/api/lists');
+  renderAudiencesGrid();
+  toast('Audience updated', 'success');
+}
+
+async function deleteAudience(e, id) {
+  e.stopPropagation();
+  if (!confirm('Delete this audience and all its subscribers?')) return;
+  await api('DELETE', `/api/lists/${id}`);
+  S.lists = await api('GET', '/api/lists');
+  renderAudiencesGrid();
+  toast('Audience deleted', 'success');
+}
+
+/* ── Add Subscriber ───────────────────────────────────────────────────────── */
+function openAddSubModal() {
+  document.getElementById('as-email').value = '';
+  document.getElementById('as-name').value = '';
+  S.subTags = [];
+  renderSubTags();
+  openModal('modal-add-sub');
+  setTimeout(() => document.getElementById('as-email').focus(), 50);
+}
+
+function handleTagInput(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const v = e.target.value.trim().replace(/,$/, '');
+    if (v && !S.subTags.includes(v)) { S.subTags.push(v); renderSubTags(); }
+    e.target.value = '';
+  }
+}
+
+function removeSubTag(t) {
+  S.subTags = S.subTags.filter(x => x !== t);
+  renderSubTags();
+}
+
+function renderSubTags() {
+  const container = document.getElementById('as-tags-input');
+  const input = document.getElementById('as-tag-field');
+  container.innerHTML = '';
+  S.subTags.forEach(t => {
+    const pill = document.createElement('span');
+    pill.className = 'tag-pill';
+    pill.innerHTML = `${esc(t)} <button onclick="removeSubTag('${esc(t)}')" type="button">×</button>`;
+    container.appendChild(pill);
+  });
+  container.appendChild(input);
+}
+
+async function addSubscriber() {
+  const email = document.getElementById('as-email').value.trim();
+  const name = document.getElementById('as-name').value.trim();
+  const tagField = document.getElementById('as-tag-field').value.trim();
+  if (tagField) S.subTags.push(tagField);
+  if (!email) { toast('Email required', 'error'); return; }
+  await api('POST', `/api/lists/${S.currentListId}/subscribers`, { email, name, tags: S.subTags });
+  S.lists = await api('GET', '/api/lists');
+  closeModal('modal-add-sub');
+  await loadSubs();
+  toast('Subscriber added', 'success');
+}
+
+/* ── Import CSV ───────────────────────────────────────────────────────────── */
+function openImportModal() {
+  S.csvParsed = [];
+  document.getElementById('csv-preview-wrap').style.display = 'none';
+  document.getElementById('csv-drop').style.display = 'block';
+  document.getElementById('btn-import').disabled = true;
+  openModal('modal-import');
+}
+
+function csvDragOver(e) { e.preventDefault(); document.getElementById('csv-drop').classList.add('drag'); }
+function csvDragLeave() { document.getElementById('csv-drop').classList.remove('drag'); }
+function csvDrop(e) { e.preventDefault(); csvDragLeave(); const f = e.dataTransfer.files[0]; if (f) parseCSVFile(f); }
+function loadCSVFile(e) { const f = e.target.files[0]; if (f) parseCSVFile(f); }
+
+function parseCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const text = ev.target.result;
+    const rows = text.trim().split(/\r?\n/).map(r => r.split(',').map(c => c.trim().replace(/^"|"$/g, '')));
+    if (rows.length < 2) { toast('CSV needs at least a header row + data', 'error'); return; }
+    const headers = rows[0].map(h => h.toLowerCase());
+    const emailIdx = headers.findIndex(h => h.includes('email'));
+    const nameIdx = headers.findIndex(h => h.includes('name'));
+    const tagsIdx = headers.findIndex(h => h.includes('tag'));
+    if (emailIdx < 0) { toast('CSV must have an "email" column', 'error'); return; }
+    S.csvParsed = rows.slice(1).map(r => ({
+      email: r[emailIdx] || '',
+      name: nameIdx >= 0 ? r[nameIdx] || '' : '',
+      tags: tagsIdx >= 0 && r[tagsIdx] ? r[tagsIdx].split(';').map(t => t.trim()).filter(Boolean) : [],
+    })).filter(r => r.email);
+
+    document.getElementById('csv-count').textContent = `${S.csvParsed.length} subscribers found`;
+    document.getElementById('csv-preview-table').innerHTML = `<table><thead><tr><th>Email</th><th>Name</th><th>Tags</th></tr></thead><tbody>${
+      S.csvParsed.slice(0, 10).map(r => `<tr><td>${esc(r.email)}</td><td>${esc(r.name||'—')}</td><td>${r.tags.join(', ')||'—'}</td></tr>`).join('')
+    }${S.csvParsed.length > 10 ? `<tr><td colspan="3" style="color:var(--text2);text-align:center">… and ${S.csvParsed.length - 10} more</td></tr>` : ''}</tbody></table>`;
+    document.getElementById('csv-drop').style.display = 'none';
+    document.getElementById('csv-preview-wrap').style.display = 'block';
+    document.getElementById('btn-import').disabled = false;
+  };
+  reader.readAsText(file);
+}
+
+function clearCSV() {
+  S.csvParsed = [];
+  document.getElementById('csv-drop').style.display = 'block';
+  document.getElementById('csv-preview-wrap').style.display = 'none';
+  document.getElementById('btn-import').disabled = true;
+  document.getElementById('csv-file').value = '';
+}
+
+async function importSubscribers() {
+  if (!S.csvParsed.length) return;
+  const result = await api('POST', `/api/lists/${S.currentListId}/import`, { subscribers: S.csvParsed });
+  S.lists = await api('GET', '/api/lists');
+  closeModal('modal-import');
+  await loadSubs();
+  toast(`Imported ${result.added} new, updated ${result.updated}, skipped ${result.skipped}`, 'success');
+}
+
+function exportCSV() {
+  const subs = S.currentSubs;
+  if (!subs.length) { toast('No subscribers to export', 'error'); return; }
+  const rows = [['email', 'name', 'tags', 'status', 'addedAt']];
+  subs.forEach(s => rows.push([s.email, s.name || '', (s.tags||[]).join(';'), s.status, s.addedAt || '']));
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = `subscribers-${Date.now()}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CAMPAIGNS TABLE
+══════════════════════════════════════════════════════════════════════════════ */
+function renderCampaignsTable() {
+  const tbody = document.getElementById('campaigns-tbody');
+  const empty = document.getElementById('campaigns-empty');
+  if (!S.campaigns.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = S.campaigns.map(c => {
+    const list = S.lists.find(l => l.id === c.listId);
+    const openRate = c.stats?.delivered ? Math.round((c.stats.opens / c.stats.delivered) * 100) + '%' : '—';
+    const clickRate = c.stats?.delivered ? Math.round((c.stats.clicks / c.stats.delivered) * 100) + '%' : '—';
+    return `<tr>
+      <td class="td-name">${esc(c.name)}</td>
+      <td>${list ? esc(list.name) : '<span style="color:var(--text2)">—</span>'}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td>${c.stats?.delivered ?? 0}</td>
+      <td>${c.stats?.opens ?? 0} <span style="color:var(--text2);font-size:11px">(${openRate})</span></td>
+      <td>${c.stats?.clicks ?? 0} <span style="color:var(--text2);font-size:11px">(${clickRate})</span></td>
+      <td>${fmtDate(c.sentAt || c.createdAt)}</td>
+      <td>
+        ${c.status === 'sent'
+          ? `<button class="icon-btn" onclick="openStatsModal('${c.id}')" title="View stats">📊</button>`
+          : c.status === 'scheduled'
+            ? `<button class="icon-btn" onclick="openBuilder('${c.id}')" title="Edit / reschedule">✏</button><button class="icon-btn" title="Cancel schedule" onclick="cancelSchedule('${c.id}')">✕</button>`
+            : `<button class="icon-btn" onclick="openBuilder('${c.id}')" title="Edit">✏</button>`}
+        <button class="icon-btn danger" onclick="deleteCampaign('${c.id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function cancelSchedule(id) {
+  if (!confirm('Cancel this scheduled campaign and revert it to draft?')) return;
+  await api('PUT', `/api/campaigns/${id}`, { status: 'draft', scheduledAt: null });
+  S.campaigns = await api('GET', '/api/campaigns');
+  renderCampaignsTable();
+  toast('Campaign unscheduled — reverted to draft', 'success');
+}
+
+async function deleteCampaign(id) {
+  if (!confirm('Delete this campaign?')) return;
+  await api('DELETE', `/api/campaigns/${id}`);
+  S.campaigns = await api('GET', '/api/campaigns');
+  renderCampaignsTable();
+  renderDashboard();
+  toast('Campaign deleted', 'success');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATS MODAL
+══════════════════════════════════════════════════════════════════════════════ */
+async function openStatsModal(id) {
+  const c = await api('GET', `/api/campaigns/${id}`);
+  const del = c.stats?.delivered || 0;
+  const openRate = del ? Math.round((c.stats.opens / del) * 100) : 0;
+  const clickRate = del ? Math.round((c.stats.clicks / del) * 100) : 0;
+  document.getElementById('stats-chips').innerHTML = [
+    { v: del, l: 'Delivered' },
+    { v: c.stats?.opens || 0, l: 'Opens' },
+    { v: openRate + '%', l: 'Open Rate' },
+    { v: c.stats?.clicks || 0, l: 'Clicks' },
+    { v: clickRate + '%', l: 'Click Rate' },
+    { v: c.stats?.unsubscribes || 0, l: 'Unsubscribes' },
+  ].map(s => `<div class="stats-chip"><div class="stats-chip-val">${s.v}</div><div class="stats-chip-lbl">${s.l}</div></div>`).join('');
+
+  const clickMap = c.clickMap || {};
+  const clicks = Object.entries(clickMap);
+  document.getElementById('stats-clicks').innerHTML = clicks.length
+    ? `<table><thead><tr><th>URL</th><th>Clicks</th></tr></thead><tbody>${
+        clicks.map(([,v]) => `<tr><td style="word-break:break-all;font-size:12px">${esc(v.url)}</td><td>${v.count}</td></tr>`).join('')
+      }</tbody></table>`
+    : '<div style="padding:16px;color:var(--text2);font-size:13px">No clicks tracked yet</div>';
+
+  const log = (c.recipientLog || []).slice(0, 30);
+  document.getElementById('stats-recipients').innerHTML = log.length
+    ? `<table><thead><tr><th>Email</th><th>Status</th><th>Sent</th></tr></thead><tbody>${
+        log.map(r => `<tr><td>${esc(r.email)}</td><td>${r.status === 'sent' ? '<span class="badge badge-sent">Sent</span>' : `<span class="badge badge-draft">${esc(r.status)}</span>`}</td><td>${fmtDate(r.sentAt)}</td></tr>`).join('')
+      }</tbody></table>`
+    : '<div style="padding:16px;color:var(--text2);font-size:13px">No recipient data</div>';
+
+  openModal('modal-stats');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CAMPAIGN BUILDER
+══════════════════════════════════════════════════════════════════════════════ */
+const TEMPLATES = [
+  { id: 'newsletter', name: 'Newsletter', icon: '📰', html: `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial,sans-serif"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)"><div style="background:#1a1a1a;padding:30px;text-align:center"><h1 style="margin:0;color:#f9b21b;font-size:24px">Your Brand</h1><p style="margin:8px 0 0;color:#aaa;font-size:13px">Monthly Newsletter</p></div><div style="padding:30px 30px 20px"><h2 style="margin:0 0 12px;color:#222;font-size:22px">Hello {{firstName}}!</h2><p style="margin:0 0 16px;color:#555;line-height:1.7">Welcome to this month's newsletter. We have some exciting updates to share with you.</p></div><div style="padding:0 30px 20px"><h3 style="margin:0 0 10px;color:#222">Featured Story</h3><p style="margin:0 0 16px;color:#555;line-height:1.7">Your story content goes here. Edit this text to share news, updates, or anything relevant to your audience.</p><a href="#" style="display:inline-block;background:#f9b21b;color:#000;padding:12px 28px;text-decoration:none;border-radius:4px;font-weight:700">Read More →</a></div><div style="margin:10px 30px;border-top:1px solid #eee"></div><div style="padding:20px 30px"><h3 style="margin:0 0 10px;color:#222">Another Update</h3><p style="margin:0;color:#555;line-height:1.7">Add more content sections as needed to keep your subscribers informed and engaged.</p></div><div style="background:#f9f9f9;padding:20px 30px;border-top:1px solid #eee;text-align:center"><p style="margin:0 0 6px;color:#999;font-size:12px">© 2025 {{fromName}}. All rights reserved.</p><p style="margin:0;color:#999;font-size:12px"><a href="{{unsubscribeUrl}}" style="color:#999">Unsubscribe</a></p></div></div></body></html>` },
+  { id: 'promo', name: 'Promotional', icon: '🎯', html: `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:20px;background:#1a1a1a;font-family:Arial,sans-serif"><div style="max-width:600px;margin:0 auto"><div style="text-align:center;padding:20px 0"><h2 style="margin:0;color:#f9b21b;font-size:20px;letter-spacing:2px;text-transform:uppercase">{{fromName}}</h2></div><div style="background:#f9b21b;padding:40px 30px;text-align:center;border-radius:8px 8px 0 0"><p style="margin:0 0 8px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#000">Limited Time Offer</p><h1 style="margin:0 0 12px;font-size:52px;font-weight:900;color:#000;line-height:1">50% OFF</h1><p style="margin:0 0 24px;font-size:16px;color:#333">Use code: <strong>SAVE50</strong></p><a href="#" style="display:inline-block;background:#000;color:#f9b21b;padding:14px 32px;text-decoration:none;border-radius:4px;font-weight:700;font-size:15px">SHOP NOW</a></div><div style="background:#fff;padding:24px 30px;text-align:center;border-radius:0 0 8px 8px"><p style="margin:0 0 6px;color:#333;font-size:15px">Hi {{firstName}}, this offer is just for you!</p><p style="margin:0;color:#777;font-size:13px">Expires soon — don't miss out.</p></div><div style="padding:16px 0;text-align:center"><p style="margin:0;color:#666;font-size:12px"><a href="{{unsubscribeUrl}}" style="color:#666">Unsubscribe</a></p></div></div></body></html>` },
+  { id: 'announce', name: 'Announcement', icon: '📢', html: `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:40px 20px;background:#f0f0f0;font-family:Arial,sans-serif"><div style="max-width:560px;margin:0 auto;background:#fff;border-radius:8px;padding:40px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08)"><div style="width:64px;height:64px;background:#f9b21b;border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:32px;line-height:64px">📢</div><h1 style="margin:0 0 16px;color:#1a1a1a;font-size:26px">Big Announcement!</h1><p style="margin:0 0 20px;color:#555;font-size:16px;line-height:1.7">Hi {{firstName}}, we have exciting news to share. Something amazing is happening and we can't wait to tell you all about it.</p><p style="margin:0 0 28px;color:#555;font-size:16px;line-height:1.7">Add more details here. Keep it clear and concise for maximum impact.</p><a href="#" style="display:inline-block;background:#1a1a1a;color:#f9b21b;padding:14px 32px;text-decoration:none;border-radius:4px;font-weight:700;font-size:14px">Learn More</a><hr style="margin:30px 0;border:none;border-top:1px solid #eee"><p style="margin:0;color:#aaa;font-size:12px"><a href="{{unsubscribeUrl}}" style="color:#aaa">Unsubscribe</a></p></div></body></html>` },
+  { id: 'blank', name: 'Blank', icon: '⬜', html: `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial,sans-serif"><div style="max-width:600px;margin:0 auto;background:#fff;padding:30px;border-radius:8px"><p>Hello {{firstName}},</p><br><p>Write your email content here.</p><br><p>Best regards,<br>{{fromName}}</p><hr style="margin:24px 0;border:none;border-top:1px solid #eee"><p style="font-size:11px;color:#aaa;text-align:center"><a href="{{unsubscribeUrl}}" style="color:#aaa">Unsubscribe</a></p></div></body></html>` },
+];
+
+const BLOCKS = [
+  { name: '+ Header', html: `\n<div style="background:#f9b21b;padding:30px;text-align:center"><h1 style="margin:0;color:#000;font-size:24px">Your Heading</h1></div>\n` },
+  { name: '+ Text', html: `\n<div style="padding:20px 30px"><p style="color:#555;line-height:1.7;font-size:15px">Your paragraph text goes here. Keep it engaging and to the point.</p></div>\n` },
+  { name: '+ Button', html: `\n<div style="padding:10px 30px"><a href="#" style="display:inline-block;background:#f9b21b;color:#000;padding:12px 28px;text-decoration:none;border-radius:4px;font-weight:700;font-size:14px">Click Here</a></div>\n` },
+  { name: '+ Image', html: `\n<div style="padding:0 30px 20px"><img src="YOUR_IMAGE_URL" alt="Image" style="width:100%;height:auto;display:block;border-radius:4px"></div>\n` },
+  { name: '+ Divider', html: `\n<div style="margin:10px 30px;border-top:1px solid #eee"></div>\n` },
+  { name: '+ Footer', html: `\n<div style="background:#f9f9f9;padding:20px 30px;border-top:1px solid #eee;text-align:center"><p style="margin:0;color:#999;font-size:12px">© 2025 {{fromName}} &nbsp;|&nbsp; <a href="{{unsubscribeUrl}}" style="color:#999">Unsubscribe</a></p></div>\n` },
+];
+
+let previewTimer = null;
+
+function openBuilder(campaignId) {
+  S.campaignId = campaignId;
+  S.builderStep = 1;
+
+  // Populate accounts
+  const accSel = document.getElementById('f-account');
+  accSel.innerHTML = '<option value="">— Select account —</option>' + S.accounts.map(a => `<option value="${a.id}">${esc(a.name)} (${esc(a.email)})</option>`).join('');
+
+  // Populate lists
+  const listSel = document.getElementById('f-list');
+  listSel.innerHTML = '<option value="">— Select audience —</option>' + S.lists.map(l => `<option value="${l.id}">${esc(l.name)} (${l.subscriberCount || 0} subscribers)</option>`).join('');
+
+  // Build template cards
+  document.getElementById('template-row').innerHTML = TEMPLATES.map(t => `
+    <div class="template-card" data-tid="${t.id}" onclick="selectTemplate('${t.id}')">
+      <div class="t-icon">${t.icon}</div>
+      <div class="t-name">${t.name}</div>
+    </div>`).join('');
+
+  // Build block buttons
+  document.getElementById('block-btns').innerHTML = BLOCKS.map((b, i) => `<button class="block-btn" onclick="insertBlock(${i})">${b.name}</button>`).join('');
+
+  if (campaignId) {
+    // Load existing campaign
+    api('GET', `/api/campaigns/${campaignId}`).then(c => {
+      document.getElementById('f-name').value = c.name || '';
+      document.getElementById('f-account').value = c.accountId || '';
+      document.getElementById('f-list').value = c.listId || '';
+      document.getElementById('f-fromName').value = c.fromName || '';
+      document.getElementById('f-replyTo').value = c.replyTo || '';
+      document.getElementById('f-subject').value = c.subject || '';
+      document.getElementById('html-editor').value = c.html || '';
+      document.getElementById('builder-title').textContent = `Edit: ${c.name}`;
+      updatePreview();
+    });
+  } else {
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-account').value = '';
+    document.getElementById('f-list').value = '';
+    document.getElementById('f-fromName').value = '';
+    document.getElementById('f-replyTo').value = '';
+    document.getElementById('f-subject').value = '';
+    document.getElementById('html-editor').value = '';
+    document.getElementById('builder-title').textContent = 'New Campaign';
+    updatePreview();
+  }
+
+  setBuilderStep(1);
+  document.getElementById('builder-overlay').classList.add('open');
+}
+
+function closeBuilder() {
+  document.getElementById('builder-overlay').classList.remove('open');
+}
+
+function setBuilderStep(step) {
+  S.builderStep = step;
+  [1, 2, 3].forEach(i => {
+    document.getElementById(`bstep-${i}`).classList.toggle('active', i === step);
+    const dot = document.getElementById(`si-${i}`);
+    dot.classList.remove('active', 'done');
+    if (i < step) dot.classList.add('done');
+    else if (i === step) dot.classList.add('active');
+  });
+  document.getElementById('btn-prev').style.display = step > 1 ? '' : 'none';
+  document.getElementById('btn-next').style.display = step < 3 ? '' : 'none';
+  document.getElementById('btn-send').style.display = step === 3 ? '' : 'none';
+  document.getElementById('schedule-panel').style.display = step === 3 ? '' : 'none';
+  if (step === 3) {
+    populateReviewStep();
+    // Reset to "send now"
+    document.querySelectorAll('input[name="send-timing"]').forEach(r => { r.checked = r.value === 'now'; });
+    document.getElementById('schedule-dt-wrap').style.display = 'none';
+    document.getElementById('btn-send').textContent = '🚀 Send Campaign';
+  }
+}
+
+async function builderNext() {
+  if (S.builderStep === 1) {
+    if (!validateStep1()) return;
+    await autoSaveCampaign();
+  } else if (S.builderStep === 2) {
+    if (!document.getElementById('html-editor').value.trim()) {
+      toast('Please add some email content', 'error'); return;
+    }
+    await autoSaveCampaign();
+  }
+  setBuilderStep(S.builderStep + 1);
+}
+
+function builderPrev() { setBuilderStep(S.builderStep - 1); }
+
+function validateStep1() {
+  const name = document.getElementById('f-name').value.trim();
+  const account = document.getElementById('f-account').value;
+  const list = document.getElementById('f-list').value;
+  const subject = document.getElementById('f-subject').value.trim();
+  if (!name) { toast('Campaign name required', 'error'); document.getElementById('f-name').focus(); return false; }
+  if (!account) { toast('Select a sending account', 'error'); return false; }
+  if (!list) { toast('Select an audience', 'error'); return false; }
+  if (!subject) { toast('Subject line required', 'error'); document.getElementById('f-subject').focus(); return false; }
+  return true;
+}
+
+async function autoSaveCampaign() {
+  const data = {
+    name: document.getElementById('f-name').value.trim(),
+    accountId: document.getElementById('f-account').value,
+    listId: document.getElementById('f-list').value,
+    fromName: document.getElementById('f-fromName').value.trim(),
+    fromEmail: S.accounts.find(a => a.id === document.getElementById('f-account').value)?.email || '',
+    replyTo: document.getElementById('f-replyTo').value.trim(),
+    subject: document.getElementById('f-subject').value.trim(),
+    html: document.getElementById('html-editor').value,
+  };
+  try {
+    let c;
+    if (S.campaignId) {
+      c = await api('PUT', `/api/campaigns/${S.campaignId}`, data);
+    } else {
+      c = await api('POST', '/api/campaigns', data);
+      S.campaignId = c.id;
+    }
+    S.campaigns = await api('GET', '/api/campaigns');
+    renderCampaignsTable();
+  } catch (err) {
+    toast(err.message, 'error');
+    throw err;
+  }
+}
+
+async function saveDraftAndClose() {
+  if (!document.getElementById('f-name').value.trim()) { closeBuilder(); return; }
+  try {
+    await autoSaveCampaign();
+    toast('Draft saved', 'success');
+    closeBuilder();
+  } catch (_) {}
+}
+
+function populateReviewStep() {
+  const name = document.getElementById('f-name').value.trim();
+  const account = S.accounts.find(a => a.id === document.getElementById('f-account').value);
+  const list = S.lists.find(l => l.id === document.getElementById('f-list').value);
+  const fromName = document.getElementById('f-fromName').value.trim() || (account?.name || '');
+  const replyTo = document.getElementById('f-replyTo').value.trim();
+  const subject = document.getElementById('f-subject').value.trim();
+
+  document.getElementById('rv-name').textContent = name;
+  document.getElementById('rv-subject').textContent = subject;
+  document.getElementById('rv-from').textContent = `${fromName} <${account?.email || '—'}>`;
+  document.getElementById('rv-replyto').textContent = replyTo || 'Same as sender';
+  document.getElementById('rv-list').textContent = list?.name || '—';
+  document.getElementById('rv-count').textContent = (list?.subscriberCount || 0) + ' subscribers';
+
+  const html = document.getElementById('html-editor').value;
+  const sample = { firstName: 'Preview', fullName: 'Preview User', email: 'preview@example.com', fromName, unsubscribeUrl: '#' };
+  const resolved = html.replace(/\{\{(\w+)\}\}/g, (_, k) => sample[k] || '');
+  document.getElementById('review-preview').srcdoc = resolved;
+  document.getElementById('test-email-input').value = '';
+  document.getElementById('test-status').style.display = 'none';
+}
+
+function selectTemplate(tid) {
+  const t = TEMPLATES.find(t => t.id === tid);
+  if (!t) return;
+  document.querySelectorAll('.template-card').forEach(c => c.classList.toggle('selected', c.dataset.tid === tid));
+  document.getElementById('html-editor').value = t.html;
+  updatePreview();
+}
+
+function insertBlock(idx) {
+  const ta = document.getElementById('html-editor');
+  const b = BLOCKS[idx];
+  const pos = ta.selectionStart;
+  const val = ta.value;
+  ta.value = val.slice(0, pos) + b.html + val.slice(pos);
+  ta.selectionStart = ta.selectionEnd = pos + b.html.length;
+  ta.focus();
+  updatePreview();
+}
+
+function insertTag(fieldId, tag) {
+  const el = document.getElementById(fieldId);
+  const pos = el.selectionStart;
+  el.value = el.value.slice(0, pos) + tag + el.value.slice(pos);
+  el.selectionStart = el.selectionEnd = pos + tag.length;
+  el.focus();
+}
+
+function insertHtmlTag(tag) {
+  insertTag('html-editor', tag);
+  updatePreview();
+}
+
+function schedulePreview() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(updatePreview, 400);
+}
+
+function updatePreview() {
+  const html = document.getElementById('html-editor').value;
+  const sample = { firstName: 'Preview', fullName: 'Preview User', email: 'preview@example.com', fromName: document.getElementById('f-fromName').value || 'Your Brand', unsubscribeUrl: '#' };
+  const resolved = html.replace(/\{\{(\w+)\}\}/g, (_, k) => sample[k] || '');
+  document.getElementById('preview-frame').srcdoc = resolved;
+}
+
+async function sendTestEmail() {
+  const to = document.getElementById('test-email-input').value.trim();
+  if (!to) { toast('Enter a test email address', 'error'); return; }
+  const status = document.getElementById('test-status');
+  status.textContent = 'Sending…';
+  status.style.color = 'var(--text2)';
+  status.style.display = 'block';
+  try {
+    await autoSaveCampaign();
+    await api('POST', `/api/campaigns/${S.campaignId}/test`, { to });
+    status.textContent = `✓ Test sent to ${to}`;
+    status.style.color = 'var(--success)';
+  } catch (err) {
+    status.textContent = '✗ ' + err.message;
+    status.style.color = 'var(--danger)';
+  }
+}
+
+async function confirmSend() {
+  const timing = document.querySelector('input[name="send-timing"]:checked')?.value || 'now';
+  const list = S.lists.find(l => l.id === document.getElementById('f-list').value);
+  const count = list?.subscriberCount || 0;
+  if (!count) { toast('Audience has no active subscribers', 'error'); return; }
+
+  // ── Schedule path ──────────────────────────────────────────────────────────
+  if (timing === 'schedule') {
+    const dtVal = document.getElementById('schedule-datetime').value;
+    if (!dtVal) { toast('Pick a date and time to schedule', 'error'); return; }
+    const scheduled = new Date(dtVal);
+    if (scheduled <= new Date()) { toast('Scheduled time must be in the future', 'error'); return; }
+    try {
+      await autoSaveCampaign();
+      await api('PUT', `/api/campaigns/${S.campaignId}`, { scheduledAt: scheduled.toISOString(), status: 'scheduled' });
+      S.campaigns = await api('GET', '/api/campaigns');
+      renderCampaignsTable();
+      renderDashboard();
+      closeBuilder();
+      toast(`Campaign scheduled for ${scheduled.toLocaleString()}`, 'success');
+    } catch (err) { toast(err.message, 'error'); }
+    return;
+  }
+
+  // ── Send now path ──────────────────────────────────────────────────────────
+  if (!confirm(`Send campaign to ${count} subscriber${count !== 1 ? 's' : ''}?\n\nThis cannot be undone.`)) return;
+  const btn = document.getElementById('btn-send');
+  btn.disabled = true;
+  btn.textContent = '⏳ Sending…';
+  document.getElementById('builder-status').textContent = `Sending to ${count} subscribers…`;
+  try {
+    await autoSaveCampaign();
+    await api('POST', `/api/campaigns/${S.campaignId}/send`, {});
+    S.campaigns = await api('GET', '/api/campaigns');
+    renderCampaignsTable();
+    renderDashboard();
+    closeBuilder();
+    toast(`Campaign sent to ${count} subscribers!`, 'success');
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = '🚀 Send Campaign';
+    document.getElementById('builder-status').textContent = '';
+    toast(err.message, 'error');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL HELPERS
+══════════════════════════════════════════════════════════════════════════════ */
+function openModal(id) {
+  document.getElementById('backdrop').classList.add('open');
+  document.querySelectorAll('.modal-box').forEach(m => m.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+  document.getElementById('backdrop').classList.remove('open');
+}
+
+function closeModalByBackdrop(e) {
+  if (e.target === document.getElementById('backdrop')) {
+    document.getElementById('backdrop').classList.remove('open');
+    document.querySelectorAll('.modal-box').forEach(m => m.style.display = 'none');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════════════════════════ */
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast-item ${type}`;
+  el.innerHTML = `${type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ'} ${esc(msg)}`;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════════════════════════════════ */
+function esc(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function statusBadge(status) {
+  const map = { draft: 'badge-draft', sending: 'badge-sending', sent: 'badge-sent', scheduled: 'badge-sending' };
+  const labels = { draft: 'Draft', sending: 'Sending…', sent: 'Sent', scheduled: '⏰ Scheduled' };
+  return `<span class="badge ${map[status] || 'badge-draft'}"><span class="dot"></span>${labels[status] || status}</span>`;
+}
+
+function toggleSchedule(radio) {
+  const isSchedule = radio.value === 'schedule';
+  document.getElementById('schedule-dt-wrap').style.display = isSchedule ? '' : 'none';
+  document.getElementById('btn-send').textContent = isSchedule ? '⏰ Schedule Campaign' : '🚀 Send Campaign';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════════════════════════════════════════ */
+init();
+</script>
+</body>
+</html>
