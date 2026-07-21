@@ -3,7 +3,7 @@ node_modules/
 
 # Sensitive data - DO NOT COMMIT
 data.json
-accounts.js
+# accounts.js is safe to commit (passwords come from env vars)
 .env
 
 # Keep config template but not real config
