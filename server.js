@@ -1022,7 +1022,7 @@ app.put('/api/contacts/:id/note', (req, res) => {
 app.get('/api/inbox/preview', async (req, res) => {
   const limit = parseInt(req.query.limit) || 5;
   const results = [];
-  for (const account of accounts.slice(0, 3)) { // check first 3 accounts
+  for (const account of accounts) {
     if (!account.imap.auth.pass) continue;
     let client;
     try {
