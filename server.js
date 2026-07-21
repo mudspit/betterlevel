@@ -7,27 +7,31 @@ const path = require('path');
 const fs = require('fs');
 const store = require('./store');
 
-// Load accounts: prefer env vars (Railway/production), fall back to accounts.js (local dev)
+// accounts.js is the single source of truth — it already reads passwords from env vars.
+// Patch passwords from env vars directly into each account so Render picks them up.
 let accounts;
 try { accounts = require('./accounts'); } catch(e) { accounts = []; }
 
-// Build accounts from env vars if defined — overrides/supplements accounts.js
-function makeAccount(id, name, email, color, icon, imapHost, smtpHost, userEnv, passEnv) {
-  const user = process.env[userEnv] || email;
-  const pass = process.env[passEnv] || '';
-  if (!pass && accounts.find(a => a.id === id)) return null; // local accounts.js has it
-  return { id, name, email: user, color, icon,
-    imap: { host: imapHost, port: 993, secure: true, auth: { user, pass } },
-    smtp: { host: smtpHost, port: 587, secure: false, auth: { user, pass } } };
+const ENV_MAP = {
+  gmail:              { user: 'GMAIL_USER',   pass: 'GMAIL_APP_PASSWORD' },
+  'artxtreme-smartin':{ user: 'DH1_USER',     pass: 'DH1_PASSWORD' },
+  'artxtreme-support':{ user: 'DH2_USER',     pass: 'DH2_PASSWORD' },
+  mudpixel:           { user: 'DH3_USER',     pass: 'DH3_PASSWORD' },
+  mudspit:            { user: 'DH4_USER',     pass: 'DH4_PASSWORD' },
+};
+for (const acct of accounts) {
+  const map = ENV_MAP[acct.id];
+  if (!map) continue;
+  if (process.env[map.pass]) {
+    acct.imap.auth.pass = process.env[map.pass];
+    acct.smtp.auth.pass = process.env[map.pass];
+  }
+  if (process.env[map.user]) {
+    acct.email = process.env[map.user];
+    acct.imap.auth.user = process.env[map.user];
+    acct.smtp.auth.user = process.env[map.user];
+  }
 }
-const envAccounts = [
-  makeAccount('gmail','Gmail','mudspit@gmail.com','#EA4335','G','imap.gmail.com','smtp.gmail.com','GMAIL_USER','GMAIL_APP_PASSWORD'),
-  makeAccount('dh1','ArtXtreme (smartin)','smartin@artxtreme.biz','#FF6B35','A','imap.dreamhost.com','smtp.dreamhost.com','DH1_USER','DH1_PASSWORD'),
-  makeAccount('dh2','ArtXtreme (support)','support@artxtreme.biz','#F7931E','S','imap.dreamhost.com','smtp.dreamhost.com','DH2_USER','DH2_PASSWORD'),
-  makeAccount('dh3','MudPixel','mud@mudpixel.com','#8B5CF6','M','imap.dreamhost.com','smtp.dreamhost.com','DH3_USER','DH3_PASSWORD'),
-  makeAccount('dh4','MudSpit','smartin@mudspit.com','#10B981','W','imap.dreamhost.com','smtp.dreamhost.com','DH4_USER','DH4_PASSWORD'),
-].filter(a => a && a.smtp.auth.pass);
-if (envAccounts.length > 0) accounts = envAccounts; // env vars always take priority when present
 
 // 1x1 transparent GIF
 const PIXEL_GIF = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
