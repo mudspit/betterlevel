@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const session = require('express-session');
 const { ImapFlow } = require('imapflow');
 const nodemailer = require('nodemailer');
 const path = require('path');
@@ -20,20 +21,58 @@ function makeAccount(id, name, email, color, icon, imapHost, smtpHost, userEnv, 
     smtp: { host: smtpHost, port: 587, secure: false, auth: { user, pass } } };
 }
 const envAccounts = [
-  makeAccount('gmail','Gmail','you@gmail.com','#EA4335','G','imap.gmail.com','smtp.gmail.com','GMAIL_USER','GMAIL_APP_PASSWORD'),
-  makeAccount('account2','Account 2','','#FF6B35','2','imap.dreamhost.com','smtp.dreamhost.com','ACCT2_USER','ACCT2_PASSWORD'),
-  makeAccount('account3','Account 3','','#F7931E','3','imap.dreamhost.com','smtp.dreamhost.com','ACCT3_USER','ACCT3_PASSWORD'),
-  makeAccount('account4','Account 4','','#8B5CF6','4','imap.dreamhost.com','smtp.dreamhost.com','ACCT4_USER','ACCT4_PASSWORD'),
-  makeAccount('account5','Account 5','','#10B981','5','imap.dreamhost.com','smtp.dreamhost.com','ACCT5_USER','ACCT5_PASSWORD'),
+  makeAccount('gmail','Gmail','mudspit@gmail.com','#EA4335','G','imap.gmail.com','smtp.gmail.com','GMAIL_USER','GMAIL_APP_PASSWORD'),
+  makeAccount('dh1','ArtXtreme (smartin)','smartin@artxtreme.biz','#FF6B35','A','imap.dreamhost.com','smtp.dreamhost.com','DH1_USER','DH1_PASSWORD'),
+  makeAccount('dh2','ArtXtreme (support)','support@artxtreme.biz','#F7931E','S','imap.dreamhost.com','smtp.dreamhost.com','DH2_USER','DH2_PASSWORD'),
+  makeAccount('dh3','MudPixel','mud@mudpixel.com','#8B5CF6','M','imap.dreamhost.com','smtp.dreamhost.com','DH3_USER','DH3_PASSWORD'),
+  makeAccount('dh4','MudSpit','smartin@mudspit.com','#10B981','W','imap.dreamhost.com','smtp.dreamhost.com','DH4_USER','DH4_PASSWORD'),
 ].filter(a => a && a.smtp.auth.pass);
-if (envAccounts.length > 0 && accounts.length === 0) accounts = envAccounts;
+if (envAccounts.length > 0) accounts = envAccounts; // env vars always take priority when present
 
 // 1x1 transparent GIF
 const PIXEL_GIF = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
 
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'sherwin2026';
+
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'sd-secret-key-change-me',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours
+}));
+
+// Auth endpoints (public — before auth guard)
+app.get('/login', (req, res) => {
+  if (req.session.authed) return res.redirect('/');
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    req.session.authed = true;
+    return res.json({ success: true });
+  }
+  res.status(401).json({ error: 'Invalid credentials' });
+});
+app.post('/api/logout', (req, res) => {
+  req.session.destroy(() => res.json({ success: true }));
+});
+
+// Tracking pixel is public (needs to fire from email clients without auth)
+app.get('/track/open/:id.gif', (req, res, next) => { req._skipAuth = true; next(); });
+
+// Auth guard — protects all routes below
+app.use((req, res, next) => {
+  if (req._skipAuth || req.session.authed) return next();
+  if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' });
+  res.redirect('/login');
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Return account list (no passwords)
@@ -272,24 +311,39 @@ app.get('/api/folders/:accountId', async (req, res) => {
   }
 });
 
+// Send via Resend HTTP API (used on Railway/Render where SMTP ports are blocked)
+async function sendViaResend(account, mailOptions, resendKey) {
+  const toArr = [mailOptions.to].flat().filter(Boolean);
+  const ccArr = mailOptions.cc ? [mailOptions.cc].flat() : [];
+  const bccArr = mailOptions.bcc ? [mailOptions.bcc].flat() : [];
+  const payload = {
+    from: mailOptions.from,
+    to: toArr,
+    ...(ccArr.length && { cc: ccArr }),
+    ...(bccArr.length && { bcc: bccArr }),
+    subject: mailOptions.subject,
+    ...(mailOptions.html ? { html: mailOptions.html } : {}),
+    ...(mailOptions.text ? { text: mailOptions.text } : {}),
+  };
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const result = await resp.json();
+  if (!resp.ok) throw new Error(result.message || result.name || 'Resend API error');
+  return { messageId: result.id };
+}
+
 // Send email
 app.post('/api/send', async (req, res) => {
   const { accountId, to, cc, bcc, subject, body, isHtml, replyTo, trackOpen } = req.body;
   const account = accounts.find(a => a.id === accountId);
   if (!account) return res.status(404).json({ error: 'Account not found' });
-  if (!account.smtp.auth.pass) return res.status(400).json({ error: 'No password configured for this account' });
+  if (!account.smtp.auth.pass && !process.env.RESEND_API_KEY) return res.status(400).json({ error: 'No password configured for this account' });
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: account.smtp.host,
-      port: account.smtp.port,
-      secure: account.smtp.secure,
-      auth: account.smtp.auth,
-      tls: { rejectUnauthorized: false },
-    });
-
     let trackId = null;
-    let finalBody = body;
     let finalHtml = isHtml ? body : null;
 
     // Inject tracking pixel if requested
@@ -299,9 +353,8 @@ app.post('/api/send', async (req, res) => {
       const publicUrl = data.settings.publicUrl || 'http://localhost:3000';
       const pixel = `<img src="${publicUrl}/track/open/${trackId}.gif" width="1" height="1" style="display:none;border:0" alt="">`;
       if (isHtml) {
-        finalHtml = finalBody + pixel;
+        finalHtml = body + pixel;
       } else {
-        // Wrap plain text in basic HTML to allow pixel injection
         finalHtml = `<div style="font-family:sans-serif;font-size:14px;white-space:pre-wrap">${body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>${pixel}`;
       }
       data.tracked_emails.push({
@@ -319,12 +372,27 @@ app.post('/api/send', async (req, res) => {
       ...(replyTo ? { inReplyTo: replyTo, references: replyTo } : {}),
     };
 
-    const info = await transporter.sendMail(mailOptions);
+    let info;
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey) {
+      // Production: use Resend HTTP API (bypasses Railway/Render SMTP port blocks)
+      info = await sendViaResend(account, mailOptions, resendKey);
+    } else {
+      // Local: use direct SMTP via Nodemailer
+      const transporter = nodemailer.createTransport({
+        host: account.smtp.host,
+        port: account.smtp.port,
+        secure: account.smtp.secure,
+        auth: account.smtp.auth,
+        tls: { rejectUnauthorized: false },
+      });
+      info = await transporter.sendMail(mailOptions);
+    }
 
     // Auto-save recipients to contacts
-    const emails = [to, cc, bcc].filter(Boolean).join(',').split(',').map(e => e.trim()).filter(Boolean);
+    const addrs = [to, cc, bcc].filter(Boolean).join(',').split(',').map(e => e.trim()).filter(Boolean);
     const data = store.get();
-    for (const addr of emails) {
+    for (const addr of addrs) {
       const match = addr.match(/^(.+?)\s*<([^>]+)>$/) || [null, '', addr];
       const name = match[1]?.trim() || '';
       const email = match[2]?.trim() || addr;
@@ -876,6 +944,150 @@ app.post('/subscribe/:listId', (req, res) => {
   }
   store.save();
   res.send(subscribePageHtml(list, getConfig(), { success: true }));
+});
+
+// ─── CLIENT DASHBOARD ────────────────────────────────────────────────────────
+
+// Calendly proxy (needs CALENDLY_TOKEN env var)
+app.get('/api/calendly/meetings', async (req, res) => {
+  const token = process.env.CALENDLY_TOKEN;
+  if (!token) return res.json({ collection: [], error: 'CALENDLY_TOKEN not set' });
+  try {
+    const userRes = await fetch('https://api.calendly.com/users/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const { resource: user } = await userRes.json();
+    const now = new Date().toISOString();
+    const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const evRes = await fetch(
+      `https://api.calendly.com/scheduled_events?user=${encodeURIComponent(user.uri)}&status=active&min_start_time=${now}&max_start_time=${future}&count=20&sort=start_time:asc`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const evData = await evRes.json();
+    // Enrich with invitee details
+    const meetings = await Promise.all((evData.collection || []).map(async ev => {
+      try {
+        const invRes = await fetch(`${ev.uri}/invitees`, { headers: { Authorization: `Bearer ${token}` } });
+        const invData = await invRes.json();
+        return { ...ev, invitees: invData.collection || [] };
+      } catch { return { ...ev, invitees: [] }; }
+    }));
+    res.json({ collection: meetings });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Reminders CRUD
+app.get('/api/reminders', (req, res) => {
+  const data = store.get();
+  res.json((data.reminders || []).sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt)));
+});
+app.post('/api/reminders', (req, res) => {
+  const { text, dueAt, contactEmail, priority } = req.body;
+  if (!text) return res.status(400).json({ error: 'text required' });
+  const data = store.get();
+  const reminder = { id: store.uuid(), text, dueAt: dueAt || null, contactEmail: contactEmail || '', priority: priority || 'normal', done: false, createdAt: new Date().toISOString() };
+  data.reminders.push(reminder);
+  store.save();
+  res.json(reminder);
+});
+app.put('/api/reminders/:id', (req, res) => {
+  const data = store.get();
+  const r = (data.reminders || []).find(r => r.id === req.params.id);
+  if (!r) return res.status(404).json({ error: 'Not found' });
+  Object.assign(r, req.body);
+  store.save();
+  res.json(r);
+});
+app.delete('/api/reminders/:id', (req, res) => {
+  const data = store.get();
+  data.reminders = (data.reminders || []).filter(r => r.id !== req.params.id);
+  store.save();
+  res.json({ success: true });
+});
+
+// Client notes (per-contact)
+app.put('/api/contacts/:id/note', (req, res) => {
+  const data = store.get();
+  const contact = data.contacts.find(c => c.id === req.params.id);
+  if (!contact) return res.status(404).json({ error: 'Not found' });
+  contact.note = req.body.note || '';
+  contact.type = req.body.type || contact.type || 'contact';
+  store.save();
+  res.json(contact);
+});
+
+// Recent inbox preview for client dashboard (unread emails across all accounts)
+app.get('/api/inbox/preview', async (req, res) => {
+  const limit = parseInt(req.query.limit) || 5;
+  const results = [];
+  for (const account of accounts.slice(0, 3)) { // check first 3 accounts
+    if (!account.imap.auth.pass) continue;
+    let client;
+    try {
+      client = await getImapClient(account);
+      const mailbox = await client.mailboxOpen('INBOX');
+      const total = mailbox.exists;
+      if (total === 0) { await client.logout(); continue; }
+      const start = Math.max(1, total - 9);
+      for await (const msg of client.fetch(`${start}:${total}`, { uid: true, flags: true, envelope: true })) {
+        if (!msg.flags.has('\\Seen')) {
+          results.push({
+            accountId: account.id, accountName: account.name, accountEmail: account.email, accountColor: account.color,
+            uid: msg.uid, subject: msg.envelope.subject || '(no subject)',
+            from: msg.envelope.from?.[0] ? `${msg.envelope.from[0].name || ''} <${msg.envelope.from[0].address}>`.trim() : 'Unknown',
+            fromEmail: msg.envelope.from?.[0]?.address || '',
+            date: msg.envelope.date,
+          });
+        }
+      }
+      await client.logout();
+    } catch { if (client) try { await client.logout(); } catch (_) {} }
+  }
+  results.sort((a, b) => new Date(b.date) - new Date(a.date));
+  res.json(results.slice(0, limit * 3));
+});
+
+// Daily digest email
+app.post('/api/digest/send', async (req, res) => {
+  const resendKey = process.env.RESEND_API_KEY;
+  if (!resendKey) return res.status(400).json({ error: 'RESEND_API_KEY not set' });
+  const data = store.get();
+  const reminders = (data.reminders || []).filter(r => !r.done);
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Manila' });
+
+  const reminderHtml = reminders.length
+    ? reminders.map(r => `<li style="padding:6px 0;border-bottom:1px solid #eee">${r.text}${r.dueAt ? ` <span style="color:#e74c3c;font-size:12px">Due: ${new Date(r.dueAt).toLocaleDateString()}</span>` : ''}</li>`).join('')
+    : '<li style="color:#999">No pending reminders</li>';
+
+  const html = `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fff">
+    <div style="background:#000;padding:24px 32px;border-radius:8px 8px 0 0">
+      <h1 style="color:#f9b21b;margin:0;font-size:20px">✉ Sherwin's Domain</h1>
+      <p style="color:#aaa;margin:4px 0 0;font-size:13px">Daily Briefing — ${today}</p>
+    </div>
+    <div style="padding:24px 32px;border:1px solid #eee;border-top:none;border-radius:0 0 8px 8px">
+      <h2 style="font-size:15px;color:#333;margin:0 0 12px">📌 Pending Reminders</h2>
+      <ul style="margin:0;padding:0 0 0 16px;color:#444;font-size:14px">${reminderHtml}</ul>
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid #eee">
+        <a href="${data.settings.publicUrl || 'https://betterlevel.onrender.com'}/clients.html" style="background:#f9b21b;color:#000;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px">Open Client Dashboard →</a>
+      </div>
+      <p style="color:#bbb;font-size:11px;margin:20px 0 0">Sent by Sherwin's Domain • <a href="${data.settings.publicUrl || 'https://betterlevel.onrender.com'}" style="color:#bbb">betterlevel.onrender.com</a></p>
+    </div>
+  </div>`;
+
+  try {
+    const resp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: 'onboarding@resend.dev', to: ['mudspit@gmail.com'], subject: `Daily Brief — ${today}`, html }),
+    });
+    const result = await resp.json();
+    if (!resp.ok) throw new Error(result.message || 'Resend error');
+    res.json({ success: true, id: result.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ─── CAMPAIGN SCHEDULER ──────────────────────────────────────────────────────

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Command — Sherwin's Domain</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #000; --surface: #0d0d0d; --surface2: #141414;
+  --border: #1e1e1e; --accent: #f9b21b; --accent-dim: rgba(249,178,27,.1);
+  --text: #fff; --text2: #999; --text3: #444;
+  --red: #e74c3c; --green: #2ecc71; --blue: #3498db;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+/* TOP BAR */
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 28px; height: 54px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.logo { color: var(--accent); font-weight: 800; font-size: 15px; text-decoration: none; }
+.page-title { font-size: 13px; color: var(--text2); margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--border); }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.date-badge { font-size: 12px; color: var(--text2); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 15px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s; }
+.btn:hover { opacity: .82; }
+.btn-gold { background: var(--accent); color: #000; }
+.btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 1fr 340px; min-height: calc(100vh - 54px); }
+.main { padding: 28px; border-right: 1px solid var(--border); }
+.side { padding: 28px 22px; overflow-y: auto; }
+
+/* SECTION */
+.section { margin-bottom: 32px; }
+.sh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.sh-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text2); }
+.sh-action { font-size: 12px; color: var(--accent); cursor: pointer; background: none; border: none; font-weight: 600; }
+.sh-action:hover { text-decoration: underline; }
+
+/* SUMMARY CARD */
+.summary-card { background: linear-gradient(135deg, #0d0d0d 0%, #111 100%); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 10px; padding: 20px 22px; margin-bottom: 10px; }
+.summary-greeting { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+.summary-date { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+.summary-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+.sstat { text-align: center; }
+.sstat-num { font-size: 28px; font-weight: 800; color: var(--accent); line-height: 1; }
+.sstat-label { font-size: 10px; color: var(--text2); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+
+/* EMAIL CARDS */
+.email-item { display: flex; align-items: flex-start; gap: 12px; padding: 13px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; margin-bottom: 7px; cursor: pointer; transition: border-color .15s, background .15s; }
+.email-item:hover { border-color: var(--accent); background: var(--accent-dim); }
+.acct-pip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.email-body { flex: 1; min-width: 0; }
+.email-from { font-size: 12px; color: var(--text2); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.email-subject { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.email-acct { font-size: 10px; color: var(--text3); margin-top: 3px; }
+.email-time { font-size: 11px; color: var(--text3); white-space: nowrap; flex-shrink: 0; }
+.badge { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; display: inline-block; }
+.badge-client { background: rgba(46,204,113,.15); color: var(--green); }
+.badge-prospect { background: rgba(249,178,27,.15); color: var(--accent); }
+.empty { text-align: center; padding: 36px 16px; color: var(--text3); font-size: 13px; }
+.empty-icon { font-size: 36px; margin-bottom: 10px; }
+.loading { color: var(--text3); font-size: 12px; padding: 20px; text-align: center; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* REMINDERS */
+.reminder-item { display: flex; align-items: flex-start; gap: 10px; padding: 11px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; margin-bottom: 7px; }
+.reminder-item.overdue { border-color: rgba(231,76,60,.35); }
+.r-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.r-body { flex: 1; min-width: 0; }
+.r-text { font-size: 13px; line-height: 1.4; }
+.r-meta { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.r-meta.over { color: var(--red); }
+.r-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.icon-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 4px; }
+.icon-btn:hover { color: var(--text); background: var(--surface2); }
+.icon-btn.done:hover { color: var(--green); }
+.icon-btn.del:hover { color: var(--red); }
+
+/* ADD REMINDER INLINE */
+.add-reminder-form { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 14px; margin-top: 6px; }
+.add-reminder-form input, .add-reminder-form textarea, .add-reminder-form select {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 7px; color: var(--text); font-size: 13px; padding: 8px 10px; margin-bottom: 8px; outline: none; font-family: inherit;
+}
+.add-reminder-form input:focus, .add-reminder-form textarea:focus { border-color: var(--accent); }
+.row { display: flex; gap: 8px; }
+
+/* DIGEST */
+.digest-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+.digest-panel p { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 14px; }
+.digest-btn { width: 100%; padding: 11px; background: var(--accent); color: #000; font-weight: 700; font-size: 13px; border: none; border-radius: 8px; cursor: pointer; transition: opacity .15s; }
+.digest-btn:hover { opacity: .88; }
+.digest-btn:disabled { opacity: .5; cursor: default; }
+
+/* CONTACTS MINI */
+.contact-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; cursor: pointer; transition: border-color .15s; }
+.contact-row:hover { border-color: var(--accent); }
+.avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+.contact-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.contact-email { font-size: 11px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* MODAL */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200; display: flex; align-items: center; justify-content: center; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 26px; width: 360px; max-width: 95vw; }
+.modal h3 { font-size: 15px; font-weight: 700; margin-bottom: 18px; }
+.modal label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .7px; display: block; margin-bottom: 5px; }
+.modal input, .modal select, .modal textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-size: 13px; padding: 9px 11px; margin-bottom: 14px; outline: none; font-family: inherit; }
+.modal input:focus, .modal textarea:focus { border-color: var(--accent); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* TOAST */
+#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; border: 1px solid #333; opacity: 0; transition: opacity .3s; z-index: 300; pointer-events: none; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center">
+    <a href="/" class="logo">✉ Sherwin's Domain</a>
+    <span class="page-title">Daily Command Center</span>
+  </div>
+  <div class="topbar-right">
+    <span class="date-badge" id="datebadge"></span>
+    <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻ Refresh</button>
+    <button class="btn btn-gold btn-sm" onclick="openReminderModal()">+ Reminder</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Summary -->
+    <div class="section">
+      <div class="summary-card">
+        <div class="summary-greeting">Good <span id="greeting-time"></span>, Sherwin 👋</div>
+        <div class="summary-date" id="full-date"></div>
+        <div class="summary-stats">
+          <div class="sstat"><div class="sstat-num" id="s-unread">—</div><div class="sstat-label">Unread</div></div>
+          <div class="sstat"><div class="sstat-num" id="s-reminders">—</div><div class="sstat-label">Reminders</div></div>
+          <div class="sstat"><div class="sstat-num" id="s-contacts">—</div><div class="sstat-label">Contacts</div></div>
+          <div class="sstat"><div class="sstat-num" id="s-overdue">—</div><div class="sstat-label">Overdue</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inbox -->
+    <div class="section">
+      <div class="sh">
+        <span class="sh-title">📥 Unread Emails</span>
+        <button class="sh-action" onclick="loadInbox()">↻ Refresh</button>
+      </div>
+      <div id="inbox-list"><div class="loading">Scanning inbox…</div></div>
+      <div id="inbox-more" style="display:none;text-align:center;margin-top:8px">
+        <button class="btn btn-ghost btn-sm" onclick="loadMoreInbox()">Load more</button>
+      </div>
+    </div>
+
+    <!-- Reminders -->
+    <div class="section">
+      <div class="sh">
+        <span class="sh-title">📌 Reminders</span>
+        <button class="sh-action" onclick="openReminderModal()">+ Add</button>
+      </div>
+      <div id="reminders-list"><div class="loading">Loading…</div></div>
+    </div>
+
+  </div>
+
+  <!-- SIDE -->
+  <div class="side">
+
+    <!-- Daily Brief -->
+    <div class="section">
+      <div class="sh"><span class="sh-title">📬 Daily Brief</span></div>
+      <div class="digest-panel">
+        <p>Sends a summary of your unread emails and pending reminders to <strong style="color:var(--text)">mudspit@gmail.com</strong> right now.</p>
+        <button class="digest-btn" id="digest-btn" onclick="sendDigest()">Send Today's Brief</button>
+        <div id="digest-status" style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center"></div>
+      </div>
+    </div>
+
+    <!-- Contacts -->
+    <div class="section">
+      <div class="sh">
+        <span class="sh-title">👥 Clients & Prospects</span>
+        <button class="sh-action" onclick="openContactModal()">+ Add</button>
+      </div>
+      <input id="contact-search" type="text" placeholder="Search…"
+        style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;padding:7px 10px;margin-bottom:10px;outline:none"
+        oninput="filterContacts(this.value)">
+      <div id="contacts-list"><div class="loading">Loading…</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- REMINDER MODAL -->
+<div class="overlay" id="reminder-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal">
+    <h3>📌 Add Reminder</h3>
+    <label>Reminder</label>
+    <textarea id="r-text" rows="2" placeholder="Follow up with client about invoice…"></textarea>
+    <label>Due Date (optional)</label>
+    <input type="datetime-local" id="r-due">
+    <label>Linked Contact (optional)</label>
+    <input type="text" id="r-contact" placeholder="email@client.com">
+    <label>Priority</label>
+    <select id="r-priority">
+      <option value="normal">Normal</option>
+      <option value="high">High 🟡</option>
+      <option value="urgent">Urgent 🔴</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('reminder-modal').style.display='none'">Cancel</button>
+      <button class="btn btn-gold" onclick="saveReminder()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT MODAL -->
+<div class="overlay" id="contact-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal">
+    <h3>👤 Add Contact</h3>
+    <label>Name</label>
+    <input type="text" id="c-name" placeholder="Full name">
+    <label>Email</label>
+    <input type="email" id="c-email" placeholder="email@example.com">
+    <label>Type</label>
+    <select id="c-type">
+      <option value="contact">Contact</option>
+      <option value="prospect">Prospect</option>
+      <option value="client">Client</option>
+    </select>
+    <label>Note</label>
+    <textarea id="c-note" rows="2" placeholder="Project notes, budget, status…"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('contact-modal').style.display='none'">Cancel</button>
+      <button class="btn btn-gold" onclick="saveContact()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── UTILS ──
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg,dur=2800){const t=document.getElementById('toast');t.textContent=msg;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',dur);}
+function timeAgo(d){const m=Math.floor((Date.now()-new Date(d))/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
+function fmtDate(iso){if(!iso)return'';return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function avatarBg(email){const c=['#f9b21b','#2ecc71','#3498db','#9b59b6','#e74c3c','#1abc9c'];let h=0;for(const ch of email)h=(h*31+ch.charCodeAt(0))&0x7fffffff;return c[h%c.length];}
+function initials(name,email){return(name||email).split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';}
+function typeBadge(t){if(t==='client')return'<span class="badge badge-client">Client</span>';if(t==='prospect')return'<span class="badge badge-prospect">Prospect</span>';return'';}
+
+// ── GREETING ──
+const nowDate = new Date();
+const h = new Date().toLocaleString('en-US',{hour:'numeric',hour12:false,timeZone:'Asia/Manila'});
+document.getElementById('greeting-time').textContent = h<12?'morning':h<17?'afternoon':'evening';
+document.getElementById('full-date').textContent = nowDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric',timeZone:'Asia/Manila'});
+document.getElementById('datebadge').textContent = nowDate.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'Asia/Manila'});
+
+// ── STATE ──
+let allContacts=[], allReminders=[], allEmails=[], emailPage=0;
+const PAGE=10;
+
+async function refreshAll(){await Promise.all([loadInbox(),loadReminders(),loadContacts()]);}
+
+// ── INBOX ──
+async function loadInbox(){
+  document.getElementById('inbox-list').innerHTML='<div class="loading">Scanning inbox…</div>';
+  emailPage=0;
+  try{
+    const r=await fetch('/api/inbox/preview?limit=30');
+    allEmails=await r.json();
+    document.getElementById('s-unread').textContent=allEmails.length;
+    renderEmails();
+  }catch{
+    document.getElementById('inbox-list').innerHTML='<div class="empty"><div class="empty-icon">⚠</div>Could not scan inbox.<br>Make sure account passwords are saved.</div>';
+    document.getElementById('s-unread').textContent='?';
+  }
+}
+function renderEmails(){
+  const el=document.getElementById('inbox-list');
+  const slice=allEmails.slice(0,(emailPage+1)*PAGE);
+  if(!allEmails.length){el.innerHTML='<div class="empty"><div class="empty-icon">✉</div>All caught up — no unread emails</div>';return;}
+  const known=new Set(allContacts.map(c=>c.email.toLowerCase()));
+  el.innerHTML=slice.map(e=>{
+    const isKnown=allContacts.find(c=>c.email.toLowerCase()===e.fromEmail.toLowerCase());
+    return`<div class="email-item" onclick="window.open('/','_blank')">
+      <div class="acct-pip" style="background:${esc(e.accountColor||'#555')}"></div>
+      <div class="email-body">
+        <div class="email-from">${esc(e.from)} ${isKnown?typeBadge(isKnown.type):''}</div>
+        <div class="email-subject">${esc(e.subject)}</div>
+        <div class="email-acct">${esc(e.accountName)} · ${esc(e.accountEmail)}</div>
+      </div>
+      <div class="email-time">${timeAgo(e.date)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('inbox-more').style.display=allEmails.length>(emailPage+1)*PAGE?'':'none';
+}
+function loadMoreInbox(){emailPage++;renderEmails();}
+
+// ── REMINDERS ──
+async function loadReminders(){
+  try{
+    const r=await fetch('/api/reminders');
+    allReminders=await r.json();
+    const active=allReminders.filter(r=>!r.done);
+    const overdue=active.filter(r=>r.dueAt&&new Date(r.dueAt)<new Date());
+    document.getElementById('s-reminders').textContent=active.length;
+    document.getElementById('s-overdue').textContent=overdue.length;
+    renderReminders();
+  }catch{document.getElementById('reminders-list').innerHTML='<div class="empty">Failed to load</div>';}
+}
+function renderReminders(){
+  const el=document.getElementById('reminders-list');
+  const active=allReminders.filter(r=>!r.done).sort((a,b)=>{
+    const pa={urgent:0,high:1,normal:2}; if(pa[a.priority]!==pa[b.priority])return pa[a.priority]-pa[b.priority];
+    if(a.dueAt&&b.dueAt)return new Date(a.dueAt)-new Date(b.dueAt);
+    if(a.dueAt)return-1;if(b.dueAt)return 1;return 0;
+  });
+  if(!active.length){el.innerHTML='<div class="empty"><div class="empty-icon">✓</div>No pending reminders</div>';return;}
+  el.innerHTML=active.map(r=>{
+    const over=r.dueAt&&new Date(r.dueAt)<new Date();
+    const dotColor=r.priority==='urgent'?'var(--red)':r.priority==='high'?'var(--accent)':'var(--blue)';
+    return`<div class="reminder-item${over?' overdue':''}">
+      <div class="r-dot" style="background:${dotColor}"></div>
+      <div class="r-body">
+        <div class="r-text">${esc(r.text)}</div>
+        ${r.dueAt?`<div class="r-meta${over?' over':''}">Due ${fmtDate(r.dueAt)}</div>`:''}
+        ${r.contactEmail?`<div class="r-meta">${esc(r.contactEmail)}</div>`:''}
+      </div>
+      <div class="r-actions">
+        <button class="icon-btn done" title="Mark done" onclick="doneReminder('${r.id}')">✓</button>
+        <button class="icon-btn del" title="Delete" onclick="delReminder('${r.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function doneReminder(id){await fetch(`/api/reminders/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({done:true})});toast('Done ✓');loadReminders();}
+async function delReminder(id){await fetch(`/api/reminders/${id}`,{method:'DELETE'});loadReminders();}
+
+function openReminderModal(prefill=''){
+  document.getElementById('r-text').value=prefill;
+  document.getElementById('r-due').value='';
+  document.getElementById('r-contact').value='';
+  document.getElementById('r-priority').value='normal';
+  document.getElementById('reminder-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('r-text').focus(),50);
+}
+async function saveReminder(){
+  const text=document.getElementById('r-text').value.trim();
+  if(!text)return toast('Enter reminder text');
+  await fetch('/api/reminders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    text,dueAt:document.getElementById('r-due').value||null,
+    contactEmail:document.getElementById('r-contact').value.trim(),
+    priority:document.getElementById('r-priority').value
+  })});
+  document.getElementById('reminder-modal').style.display='none';
+  toast('Reminder saved 📌');
+  loadReminders();
+}
+
+// ── CONTACTS ──
+async function loadContacts(){
+  try{
+    const r=await fetch('/api/contacts');
+    allContacts=await r.json();
+    document.getElementById('s-contacts').textContent=allContacts.length;
+    renderContacts(allContacts);
+  }catch{document.getElementById('contacts-list').innerHTML='<div class="empty">Failed to load</div>';}
+}
+function renderContacts(list){
+  const el=document.getElementById('contacts-list');
+  if(!list.length){el.innerHTML='<div class="empty" style="padding:20px">No contacts yet</div>';return;}
+  el.innerHTML=list.map(c=>{
+    const bg=avatarBg(c.email);
+    return`<div class="contact-row" onclick="quickReminder('${esc(c.email)}','${esc(c.name||'')}')">
+      <div class="avatar" style="background:${bg};color:#000">${initials(c.name,c.email)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="contact-name">${esc(c.name||'—')}</div>
+        <div class="contact-email">${esc(c.email)}</div>
+      </div>
+      ${typeBadge(c.type)}
+    </div>`;
+  }).join('');
+}
+function filterContacts(q){const lq=q.toLowerCase();renderContacts(q?allContacts.filter(c=>(c.name||'').toLowerCase().includes(lq)||c.email.toLowerCase().includes(lq)):allContacts);}
+
+function openContactModal(){
+  ['c-name','c-email','c-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c-type').value='contact';
+  document.getElementById('contact-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('c-name').focus(),50);
+}
+async function saveContact(){
+  const name=document.getElementById('c-name').value.trim();
+  const email=document.getElementById('c-email').value.trim();
+  if(!email)return toast('Email required');
+  const r=await fetch('/api/contacts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email})});
+  const c=await r.json();
+  const type=document.getElementById('c-type').value;
+  const note=document.getElementById('c-note').value.trim();
+  if(type!=='contact'||note)await fetch(`/api/contacts/${c.id}/note`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,note})});
+  document.getElementById('contact-modal').style.display='none';
+  toast('Contact added ✓');
+  loadContacts();
+}
+
+function quickReminder(email,name){openReminderModal(`Follow up with ${name||email}`);}
+
+// ── DAILY BRIEF ──
+async function sendDigest(){
+  const btn=document.getElementById('digest-btn');
+  const status=document.getElementById('digest-status');
+  btn.disabled=true; btn.textContent='Sending…'; status.textContent='';
+  try{
+    const r=await fetch('/api/digest/send',{method:'POST',headers:{'Content-Type':'application/json'}});
+    const d=await r.json();
+    if(d.success){btn.textContent='Sent ✓';status.textContent='Check mudspit@gmail.com';toast('Daily brief sent ✓');}
+    else{btn.textContent='Send Today\'s Brief';btn.disabled=false;status.textContent=d.error||'Error';toast('Error: '+(d.error||'Unknown'));}
+  }catch{btn.textContent='Send Today\'s Brief';btn.disabled=false;toast('Connection error');}
+}
+
+// Keyboard shortcut: R = add reminder
+document.addEventListener('keydown',e=>{if(e.key==='r'&&!e.target.matches('input,textarea,select'))openReminderModal();});
+
+refreshAll();
+setInterval(loadInbox,5*60*1000); // auto-refresh inbox every 5 min
+</script>
+</body>
+</html>

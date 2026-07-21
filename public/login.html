@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sherwin's Domain — Login</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #000;
+    color: #fff;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    background: #0d0d0d;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  }
+  .logo {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .logo-icon {
+    font-size: 40px;
+    display: block;
+    margin-bottom: 10px;
+  }
+  .logo h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f9b21b;
+    letter-spacing: .5px;
+  }
+  .logo p {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 6px;
+  }
+  input {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    padding: 11px 14px;
+    margin-bottom: 18px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  input:focus { border-color: #f9b21b; }
+  button {
+    width: 100%;
+    background: #f9b21b;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 12px;
+    cursor: pointer;
+    transition: opacity .2s;
+    margin-top: 4px;
+  }
+  button:hover { opacity: .88; }
+  button:disabled { opacity: .5; cursor: default; }
+  .error {
+    color: #e74c3c;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 14px;
+    min-height: 18px;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <span class="logo-icon">✉</span>
+    <h1>Sherwin's Domain</h1>
+    <p>Admin Access</p>
+  </div>
+  <form id="loginForm">
+    <label>Username</label>
+    <input type="text" id="username" autocomplete="username" placeholder="admin" required>
+    <label>Password</label>
+    <input type="password" id="password" autocomplete="current-password" placeholder="••••••••" required>
+    <button type="submit" id="btn">Sign In</button>
+    <div class="error" id="err"></div>
+  </form>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('btn');
+  const err = document.getElementById('err');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  err.textContent = '';
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      window.location.href = '/';
+    } else {
+      err.textContent = data.error || 'Invalid credentials';
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  } catch {
+    err.textContent = 'Connection error. Try again.';
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+});
+</script>
+</body>
+</html>
